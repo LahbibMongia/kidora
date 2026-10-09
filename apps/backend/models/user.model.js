@@ -66,6 +66,8 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
+    household: { type: mongoose.Schema.Types.ObjectId, ref: "Household" },
+
     // --- Babysitter fields ---
     hourlyRate: {
       type: Number,

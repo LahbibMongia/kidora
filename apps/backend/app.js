@@ -13,6 +13,7 @@ const reservationRouter = require("./routes/reservation.routes");
 const notificationRouter = require("./routes/notification.routes");
 const avisRouter = require("./routes/avis.routes");
 const recommendationRouter = require("./routes/recommendation.routes");
+const familyRouter = require("./routes/family.routes");
 const ReservationSlot = require("./models/reservation-slot.model");
 
 const app = express();
@@ -54,6 +55,7 @@ app.use("/api/reservations", reservationRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/reviews", avisRouter);
 app.use("/api/recommendations", recommendationRouter);
+app.use("/api/families", familyRouter);
 
 if (process.env.NODE_ENV === "production") {
   const frontendBuild = path.resolve(__dirname, "../frontend/dist");

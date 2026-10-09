@@ -33,6 +33,60 @@ export default function Profile() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileMessage, setProfileMessage] = useState("");
+  const [family, setFamily] = useState({ members: [], children: [] });
+  const [children, setChildren] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteToken, setInviteToken] = useState("");
+  const [joinToken, setJoinToken] = useState("");
+  const [familyMessage, setFamilyMessage] = useState("");
+
+  const loadFamily = useCallback(async () => {
+    if (!user?._id) return;
+    try {
+      const response = await API.get("/families/me");
+      const household = response.data.data;
+      setFamily(household);
+      setChildren(household.children || []);
+    } catch (error) {
+      setFamilyMessage("Could not load household details.");
+    }
+  }, [user?._id]);
+
+  useEffect(() => { loadFamily(); }, [loadFamily]);
+
+  const inviteParent = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await API.post("/families/invite", { email: inviteEmail });
+      setInviteToken(response.data.data.invitationToken);
+      setFamilyMessage(`Invitation code created for ${inviteEmail}. Share this code with them.`);
+    } catch (error) {
+      setFamilyMessage(error.response?.data?.message || "Could not invite this parent.");
+    }
+  };
+
+  const joinFamily = async (event) => {
+    event.preventDefault();
+    try {
+      await API.post("/families/join", { invitationToken: joinToken });
+      setJoinToken("");
+      setFamilyMessage("You joined the shared household.");
+      await loadFamily();
+      await loadReservations(user._id);
+    } catch (error) {
+      setFamilyMessage(error.response?.data?.message || "Could not join this household.");
+    }
+  };
+
+  const saveChildren = async () => {
+    try {
+      const response = await API.put("/families/children", { children });
+      setChildren(response.data.data.children);
+      setFamilyMessage("Shared children list saved.");
+    } catch (error) {
+      setFamilyMessage(error.response?.data?.message || "Could not save children.");
+    }
+  };
 
   const saveProfile = async (event) => {
     event.preventDefault();
@@ -228,32 +282,32 @@ export default function Profile() {
           <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>
             <div className="flex justify-between items-center mb-6 border-b border-blueGray-100 pb-3 pl-4 pr-4">
               <h2 className="text-xl font-bold text-blueGray-800">My Children</h2>
-              <button className="text-sm font-bold text-blueGray-500 hover:text-blueGray-800 transition-colors uppercase outline-none focus:outline-none">
+              <button type="button" onClick={() => setChildren([...children, { name: "", age: "" }])} className="text-sm font-bold text-blueGray-500 hover:text-blueGray-800 transition-colors uppercase outline-none focus:outline-none">
                 + Add Child
               </button>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-4 p-4 bg-white transition-all duration-200" style={{ borderRadius: "10px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
-                <div className="bg-lightBlue-100 text-lightBlue-600 rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 shadow-sm font-bold text-xl relative">
-                  S
-                </div>
-                <div className="flex flex-col pl-4">
-                  <h4 className="font-bold text-blueGray-800 text-lg mb-0 relative top-1">Sarah</h4>
-                  <p className="text-sm font-semibold text-blueGray-500 relative bottom-1">4 years old</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 p-4 bg-white transition-all duration-200" style={{ borderRadius: "10px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
-                <div className="bg-teal-100 text-teal-600 rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 shadow-sm font-bold text-xl relative">
-                  L
-                </div>
-                <div className="flex flex-col pl-4">
-                  <h4 className="font-bold text-blueGray-800 text-lg mb-0 relative top-1">Leo</h4>
-                  <p className="text-sm font-semibold text-blueGray-500 relative bottom-1">Toddler</p>
-                </div>
-              </div>
-            </div>
+            {children.map((child, index) => <div key={`${index}-${child.name}`} className="grid grid-cols-[1fr_120px_auto] gap-2 mb-2">
+              <input aria-label={`Child ${index + 1} name`} value={child.name} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, name: event.target.value } : item))} placeholder="Child name" className="border rounded p-2" />
+              <input aria-label={`Child ${index + 1} age`} type="number" min="0" max="18" value={child.age ?? ""} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, age: event.target.value } : item))} placeholder="Age" className="border rounded p-2" />
+              <button type="button" onClick={() => setChildren(children.filter((_, i) => i !== index))} aria-label={`Remove child ${index + 1}`}>Remove</button>
+            </div>)}
+            <button type="button" onClick={saveChildren} className="bg-blueGray-800 text-white rounded px-4 py-2">Save children</button>
           </div>
+
+          <section className="bg-white shadow-lg p-6 sm:p-8 rounded-lg" aria-labelledby="family-heading">
+            <h2 id="family-heading" className="text-xl font-bold mb-3">Shared household</h2>
+            <ul className="mb-4">{family.members?.map((member) => <li key={member._id}>{member.name} ({member.email})</li>)}</ul>
+            <form onSubmit={inviteParent} className="flex gap-2 mb-3">
+              <input type="email" aria-label="Other parent email" placeholder="Other parent's email" required value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} className="border rounded p-2" />
+              <button type="submit" className="border rounded px-3">Create invite code</button>
+            </form>
+            {inviteToken && <p>Invitation code: <output aria-label="Invitation code">{inviteToken}</output></p>}
+            <form onSubmit={joinFamily} className="flex gap-2">
+              <input aria-label="Invitation code" placeholder="Invitation code" required value={joinToken} onChange={(event) => setJoinToken(event.target.value)} className="border rounded p-2" />
+              <button type="submit" className="border rounded px-3">Join household</button>
+            </form>
+            {familyMessage && <p role="status" className="mt-2">{familyMessage}</p>}
+          </section>
 
           {/* Upcoming Reservations */}
           <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>

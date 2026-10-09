@@ -150,8 +150,16 @@ exports.getReservationById = async (req, res) => {
 exports.getReservationsByParent = async (req, res) => {
   try {
     const { parentId } = req.params;
-    if (req.auth.role !== "admin" && String(req.auth._id) !== String(parentId)) return res.status(403).json({ success: false, message: "Insufficient permissions" });
-    const reservations = await Reservation.find({ parent: parentId }).populate("babysitter", "name hourlyRate phone image").sort({ date: -1 }).limit(500);
+    let parentIds = [parentId];
+    if (req.auth.role !== "admin") {
+      const requestedParent = await User.findOne({ _id: parentId, role: "parent" }).select("household");
+      const requester = await User.findById(req.auth._id).select("household");
+      if (!requestedParent || !requester || (String(req.auth._id) !== String(parentId) && (!requester.household || String(requester.household) !== String(requestedParent.household)))) {
+        return res.status(403).json({ success: false, message: "Insufficient permissions" });
+      }
+      if (requester.household) parentIds = (await User.find({ household: requester.household, role: "parent" }).distinct("_id"));
+    }
+    const reservations = await Reservation.find({ parent: { $in: parentIds } }).populate("babysitter", "name hourlyRate phone image").populate("parent", "name").sort({ date: -1 }).limit(500);
     return res.json({ success: true, data: reservations });
   } catch (error) { return apiError(res, error); }
 };
@@ -196,7 +204,16 @@ async function changeStatus(req, res, { status, actorRole, message, notifyUser }
   try {
     const existing = await Reservation.findById(req.params.id);
     if (!existing) return res.status(404).json({ success: false, message: "Reservation not found" });
-    if (req.auth.role !== "admin" && (req.auth.role !== actorRole || String(existing[actorRole === "parent" ? "parent" : "babysitter"]) !== String(req.auth._id))) {
+    let sameHousehold = false;
+    if (actorRole === "parent" && req.auth.role === "parent") {
+      const [requester, owner] = await Promise.all([
+        User.findById(req.auth._id).select("household"),
+        User.findById(existing.parent).select("household"),
+      ]);
+      sameHousehold = Boolean(requester?.household && String(requester.household) === String(owner?.household));
+    }
+    const ownsReservation = String(existing[actorRole === "parent" ? "parent" : "babysitter"]) === String(req.auth._id);
+    if (req.auth.role !== "admin" && (req.auth.role !== actorRole || (!ownsReservation && !sameHousehold))) {
       return res.status(403).json({ success: false, message: "Insufficient permissions" });
     }
     const allowedStatuses = actorRole === "parent" ? ["pending", "confirmed"] : ["pending"];
