@@ -62,6 +62,10 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page).toHaveURL(/\/profile-bs$/);
   const sitterId = await page.evaluate(() => JSON.parse(localStorage.getItem("user"))._id);
   await expect(page.getByText(sitterName).first()).toBeVisible();
+  await expect(page.getByTestId("sitter-profile-stats")).toContainText(/0\s*Bookings Completed/);
+  await expect(page.getByTestId("sitter-profile-stats")).toContainText(/4\s*Years Experience/);
+  const profilePosition = await page.locator("main.profile-page").evaluate((node) => node.compareDocumentPosition(document.getElementById("notifications-heading")));
+  expect(profilePosition & 4).toBeTruthy();
   await page.getByRole("button", { name: "Edit Profile" }).click();
   await page.locator('input[name="availability"]').fill("Weekends");
   await page.getByRole("button", { name: "Save Changes" }).click();

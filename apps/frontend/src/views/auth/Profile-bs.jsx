@@ -60,12 +60,11 @@ export default function Profile() {
     }
   };
 
-  // Mocking babysitter profile details for this view. 
-  // In a real application, you would fetch this dynamic babysitter object from your API or pass it via route state.
-  const babysitter = {
-    _id: "sitter_mayssa_123", // Matches target dynamic babysitter ID
-    name: "Mayssa Hmidi",
-  };
+  const babysitter = currentUser || {};
+  const completedBookings = reservations.filter((booking) => booking.status === "completed").length;
+  const averageRating = sitterReviews.length
+    ? (sitterReviews.reduce((total, review) => total + Number(review.rating || 0), 0) / sitterReviews.length).toFixed(1)
+    : "—";
 
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [reservationData, setReservationData] = useState({
@@ -118,8 +117,6 @@ export default function Profile() {
   return (
     <>
       <Navbar transparent />
-      <section className="container mx-auto px-4 max-w-5xl pt-24"><NotificationCenter /></section>
-      
       {/* Reservation Modal */}
       {showReservationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -204,43 +201,6 @@ export default function Profile() {
         </div>
       )}
 
-      <section aria-labelledby="booking-plan-heading" className="container mx-auto px-4 max-w-5xl pt-24">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 id="booking-plan-heading" className="text-2xl font-bold text-blueGray-800 mb-4">Booking plan</h2>
-          {reservationError && <p role="alert" className="text-red-600 mb-3">{reservationError}</p>}
-          {reservations.length === 0 ? <p className="text-blueGray-500">No bookings in your plan yet.</p> : (
-            <div className="space-y-3">
-              {reservations.map((booking) => (
-                <article key={booking._id} className="border rounded-lg p-4 flex flex-wrap justify-between gap-3 items-center">
-                  <div>
-                    <p className="font-semibold">{booking.parent?.name || "Parent"}</p>
-                    <p>{new Date(booking.date).toLocaleDateString()} · {booking.startTime || booking.timeSlot} {booking.endTime ? `- ${booking.endTime}` : ""}</p>
-                    {booking.notes && <p className="text-sm text-blueGray-600">{booking.notes}</p>}
-                    {["confirmed", "completed"].includes(booking.status) && <ReviewForm reservationId={booking._id} existingReview={myReviewsByReservation[String(booking._id)]} onSubmitted={() => { loadReviews(); loadMyReviews(); }} />}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="capitalize">{booking.status}</span>
-                    {booking.status === "pending" && <>
-                      <button type="button" onClick={() => updateReservation(booking._id, "confirm")} className="bg-green-600 text-white rounded px-3 py-2">Accept</button>
-                      <button type="button" onClick={() => updateReservation(booking._id, "reject")} className="bg-red-600 text-white rounded px-3 py-2">Decline</button>
-                    </>}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-          <div className="mt-8 border-t pt-5">
-            <h3 className="text-lg font-bold mb-3">Public recommendations</h3>
-            {sitterReviews.length === 0 ? <p className="text-blueGray-500">No recommendations yet.</p> : sitterReviews.map((review) => (
-              <article key={review._id} className="border-b py-3">
-                <p className="font-semibold">{review.reviewer?.name || review.parent?.name || "Parent"} · {review.rating}/5</p>
-                <p>{review.comment}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <main className="profile-page">
         <section className="relative block h-500-px">
           <div
@@ -276,8 +236,8 @@ export default function Profile() {
                   <div className="w-full lg:w-3/12 px-4 lg:order-2 flex justify-center">
                     <div className="relative">
                       <img
-                        alt="..."
-                        src={asset_assets_img_team_2_800x800_jpg}
+                        alt={currentUser?.name ? `${currentUser.name} profile` : "Babysitter profile"}
+                        src={currentUser?.image && currentUser.image !== "default.jpg" ? currentUser.image : asset_assets_img_team_2_800x800_jpg}
                         className="shadow-xl rounded-full h-auto align-middle border-none absolute -top-16 -ml-20 lg:-ml-16 max-w-150-px"
                       />
                     </div>
@@ -297,22 +257,22 @@ export default function Profile() {
                     </div>
                   </div>
                   <div className="w-full lg:w-4/12 px-4 lg:order-1">
-                    <div className="flex justify-center py-4 lg:pt-4 pt-8">
+                      <div data-testid="sitter-profile-stats" className="flex justify-center py-4 lg:pt-4 pt-8">
                       <div className="mr-4 p-3 text-center">
                         <span className="text-xl font-bold block uppercase tracking-wide text-blueGray-600">
-                          22
+                          {completedBookings}
                         </span>
                         <span className="text-sm text-blueGray-400">Bookings Completed</span>
                       </div>
                       <div className="mr-4 p-3 text-center">
                         <span className="text-xl font-bold block uppercase tracking-wide text-blueGray-600">
-                          6
+                          {Number(currentUser?.experienceYears) || 0}
                         </span>
                         <span className="text-sm text-blueGray-400">Years Experience</span>
                       </div>
                       <div className="p-3 text-center">
                         <span className="text-xl font-bold block uppercase tracking-wide text-blueGray-600">
-                          4.9
+                          {averageRating}
                         </span>
                         <span className="text-sm text-blueGray-400">Rating</span>
                       </div>
@@ -326,15 +286,15 @@ export default function Profile() {
                   </h3>
                   <div className="text-sm leading-normal mt-0 mb-2 text-blueGray-400 font-bold">
                     <i className="fas fa-map-marker-alt mr-2 text-lg text-blueGray-400"></i>
-                    Tunis
+                    {currentUser?.adresse || "Location not provided"}
                   </div>
                   <div className="mb-2 text-blueGray-600 mt-10">
                     <i className="fas fa-briefcase mr-2 text-lg text-blueGray-400"></i>
-                    Certified Early Childhood Educator | CPR & First Aid Certified
+                    {currentUser?.certif || "No certifications listed"}
                   </div>
                   <div className="mb-2 text-blueGray-600">
-                    <i className="fas fa-university mr-2 text-lg text-blueGray-400"></i>
-                    B.A. in Child Psychology, State University
+                    <i className="fas fa-user-check mr-2 text-lg text-blueGray-400"></i>
+                    {currentUser?.hasBackgroundCheck ? "Background check completed" : "Background check not listed"}
                   </div>
                 </div>
 
@@ -342,7 +302,7 @@ export default function Profile() {
                   <div className="flex flex-wrap justify-center">
                     <div className="w-full lg:w-9/12 px-6">
                       <p className="mb-4 text-lg leading-relaxed text-blueGray-700">
-                        With over 6 years of professional childcare experience, I specialize in creating a safe, engaging, and educational environment for children ages 2-10. My approach combines structured learning with creative play, ensuring your little ones are not just supervised, but truly inspired.
+                        {currentUser?.experience || "This babysitter has not added a profile introduction yet."}
                       </p>
                     </div>
                   </div>
@@ -363,7 +323,38 @@ export default function Profile() {
           </div>
         </section>
       </main>
-      <section className="container mx-auto px-4 max-w-5xl -mt-8 mb-12"><MessageCenter /></section>
+      <section className="container mx-auto px-4 max-w-5xl pt-8"><NotificationCenter /></section>
+      <section aria-labelledby="booking-plan-heading" className="container mx-auto px-4 max-w-5xl pt-8 mb-12">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 id="booking-plan-heading" className="text-2xl font-bold text-blueGray-800 mb-4">Booking plan</h2>
+          {reservationError && <p role="alert" className="text-red-600 mb-3">{reservationError}</p>}
+          {reservations.length === 0 ? <p className="text-blueGray-500">No bookings in your plan yet.</p> : <div className="space-y-3">
+            {reservations.map((booking) => <article key={booking._id} className="border rounded-lg p-4 flex flex-wrap justify-between gap-3 items-center">
+              <div>
+                <p className="font-semibold">{booking.parent?.name || "Parent"}</p>
+                <p>{new Date(booking.date).toLocaleDateString()} · {booking.startTime || booking.timeSlot} {booking.endTime ? `- ${booking.endTime}` : ""}</p>
+                {booking.notes && <p className="text-sm text-blueGray-600">{booking.notes}</p>}
+                {["confirmed", "completed"].includes(booking.status) && <ReviewForm reservationId={booking._id} existingReview={myReviewsByReservation[String(booking._id)]} onSubmitted={() => { loadReviews(); loadMyReviews(); }} />}
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="capitalize">{booking.status}</span>
+                {booking.status === "pending" && <>
+                  <button type="button" onClick={() => updateReservation(booking._id, "confirm")} className="bg-green-600 text-white rounded px-3 py-2">Accept</button>
+                  <button type="button" onClick={() => updateReservation(booking._id, "reject")} className="bg-red-600 text-white rounded px-3 py-2">Decline</button>
+                </>}
+              </div>
+            </article>)}
+          </div>}
+          <div className="mt-8 border-t pt-5">
+            <h3 className="text-lg font-bold mb-3">Public recommendations</h3>
+            {sitterReviews.length === 0 ? <p className="text-blueGray-500">No recommendations yet.</p> : sitterReviews.map((review) => <article key={review._id} className="border-b py-3">
+              <p className="font-semibold">{review.reviewer?.name || review.parent?.name || "Parent"} · {review.rating}/5</p>
+              <p>{review.comment}</p>
+            </article>)}
+          </div>
+        </div>
+      </section>
+      <section className="container mx-auto px-4 max-w-5xl mb-12"><MessageCenter /></section>
       <Footer />
     </>
   );
