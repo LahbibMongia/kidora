@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import API from "service/api";
 import { useAuth } from "context/AuthContext.jsx";
 
-export default function NotificationCenter() {
+export default function NotificationCenter({ id = "notifications-heading" }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [error, setError] = useState("");
@@ -26,7 +26,7 @@ export default function NotificationCenter() {
   };
 
   const unread = notifications.filter((item) => !item.read).length;
-  return <section aria-labelledby="notifications-heading" className="bg-white rounded-lg shadow p-5 mb-6">
+  return <section id={id === "notifications-heading" ? undefined : id} aria-labelledby="notifications-heading" className="bg-white rounded-lg shadow p-5 mb-6">
     <div className="flex justify-between items-center gap-3">
       <h2 id="notifications-heading" className="text-xl font-bold">Notifications <span aria-label={`${unread} unread`}>({unread} unread)</span></h2>
       <button type="button" onClick={load} className="border rounded px-3 py-2">Refresh</button>

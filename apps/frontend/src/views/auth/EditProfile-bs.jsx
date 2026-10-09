@@ -4,6 +4,7 @@ import Navbar from "components/Navbars/AuthNavbar.jsx";
 import Footer from "components/Footers/Footer.jsx";
 import { useAuth } from "context/AuthContext.jsx";
 import API from "service/api";
+import ProfilePhotoUpload from "components/ProfilePhotoUpload.jsx";
 
 export default function EditProfileBs() {
   const { user, setUser } = useAuth();
@@ -33,6 +34,7 @@ export default function EditProfileBs() {
         <main className="container mx-auto px-4 max-w-3xl">
           <form onSubmit={saveProfile} className="bg-white shadow-lg rounded-lg p-6 sm:p-8 mt-8 space-y-5">
             <h1 className="text-2xl font-bold text-blueGray-800">Edit Babysitter Profile</h1>
+            <ProfilePhotoUpload user={user} setUser={setUser} className="items-start" />
             <label className="block">Name<input name="name" required defaultValue={user?.name || ""} className="mt-1 w-full border rounded p-3" /></label>
             <label className="block">Email<input type="email" readOnly value={user?.email || ""} className="mt-1 w-full border rounded p-3 bg-gray-100" /></label>
             <label className="block">Phone<input name="phone" required defaultValue={user?.phone || ""} className="mt-1 w-full border rounded p-3" /></label>

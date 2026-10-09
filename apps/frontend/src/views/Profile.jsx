@@ -1,4 +1,3 @@
-import asset_assets_img_team_2_800x800_jpg from "assets/img/team-2-800x800.jpg";
 import asset_assets_img_team_3_800x800_jpg from "assets/img/team-3-800x800.jpg";
 // Profile.js
 import React, { useCallback, useState, useEffect } from "react";
@@ -10,6 +9,7 @@ import API from "service/api";
 import ReviewForm from "components/ReviewForm.jsx";
 import MessageCenter from "components/MessageCenter.jsx";
 import NotificationCenter from "components/NotificationCenter.jsx";
+import ProfilePhotoUpload from "components/ProfilePhotoUpload.jsx";
 
 
 // Import your API services
@@ -45,6 +45,7 @@ export default function Profile() {
   const [reviewsByReservation, setReviewsByReservation] = useState({});
   const [familyLoading, setFamilyLoading] = useState(true);
   const [childrenSaving, setChildrenSaving] = useState(false);
+  const [sitterSearch, setSitterSearch] = useState("");
 
   const loadFamily = useCallback(async () => {
     if (!user?._id) return;
@@ -188,21 +189,24 @@ export default function Profile() {
           <div className="container mx-auto max-w-4xl flex justify-end items-center gap-12">
             
             {/* Search Bar */}
-            <div className="relative w-72 shrink-0">
+            <form onSubmit={(event) => { event.preventDefault(); history.push(`/auth/booking${sitterSearch.trim() ? `?search=${encodeURIComponent(sitterSearch.trim())}` : ""}`); }} className="relative w-72 shrink-0">
               <span className="z-10 h-full font-normal absolute text-center text-blueGray-300 bg-transparent rounded text-xs items-center justify-center w-10 flex">
                 <i className="fas fa-search"></i>
               </span>
               <input
                 type="text"
                 placeholder="Find a babysitter"
+                aria-label="Find a babysitter"
+                value={sitterSearch}
+                onChange={(event) => setSitterSearch(event.target.value)}
                 className="border border-blueGray-200 px-3 py-2 placeholder-blueGray-300 text-blueGray-600 relative bg-white rounded text-xs shadow-sm outline-none focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 w-full pl-10 transition-colors"
                 style={{ borderRadius: "10px" }}
               />
-            </div>
+            </form>
 
             {/* Notification & Action Button Container */}
             <div className="flex items-center gap-8">
-              <button className="text-blueGray-400 hover:text-blueGray-600 transition-colors w-8 h-8 flex items-center justify-center outline-none focus:outline-none shrink-0 relative">
+              <button type="button" aria-label="Go to notifications" onClick={() => document.getElementById("notifications")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="text-blueGray-400 hover:text-blueGray-600 transition-colors w-8 h-8 flex items-center justify-center outline-none focus:outline-none shrink-0 relative">
                 <i className="fas fa-bell text-base absolute"></i>
               </button>
 
@@ -219,7 +223,7 @@ export default function Profile() {
         </header>
 
         <main className="container mx-auto px-4 max-w-4xl flex flex-col gap-8">
-          <NotificationCenter />
+          <NotificationCenter id="notifications" />
           
           {/* Main Profile Card (Household Section) */}
           <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>
@@ -227,19 +231,7 @@ export default function Profile() {
             
             <div className="flex flex-col sm:flex-row gap-8 pl-4">
               {/* Profile Photo & Edit Button */}
-              <div className="flex flex-col items-center sm:items-start flex-shrink-0">
-                <div className="relative mb-4">
-                  <img
-                    alt="Profile Avatar"
-                    src={asset_assets_img_team_2_800x800_jpg}
-                    className="shadow-md h-20 w-20 object-cover border-none mx-auto"
-                    style={{ borderRadius: "10px" }}
-                  />
-                </div>
-                <button className="text-xs font-bold text-blueGray-500 hover:text-blueGray-800 transition-colors uppercase outline-none focus:outline-none pt-2 text-center w-full sm:text-left">
-                  Edit Photo
-                </button>
-              </div>
+              <ProfilePhotoUpload user={user} setUser={setUser} className="flex-shrink-0" />
 
               {/* Account Information */}
               <form onSubmit={saveProfile} className="flex flex-col w-full gap-4 pl-0 sm:pl-4">
@@ -360,7 +352,7 @@ export default function Profile() {
                         <div className="bg-blueGray-100 rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0">
                           <img 
                             alt="..." 
-                            src={res.imgSrc || asset_assets_img_team_3_800x800_jpg} 
+                            src={res.babysitter?.image && res.babysitter.image !== "default.jpg" ? res.babysitter.image : res.imgSrc || asset_assets_img_team_3_800x800_jpg}
                             className="shadow-md rounded-full h-full w-full object-cover border-none"
                           />
                         </div>

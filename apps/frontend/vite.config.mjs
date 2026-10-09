@@ -23,6 +23,10 @@ export default defineConfig({
         target: apiProxyTarget,
         changeOrigin: true,
       },
+      "/images": {
+        target: apiProxyTarget,
+        changeOrigin: true,
+      },
     },
   },
   build: { outDir: "dist", emptyOutDir: true },

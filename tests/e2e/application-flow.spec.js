@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const path = require("path");
 
 const password = "PlaywrightPass123";
 
@@ -89,10 +90,15 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await page.locator('input[name="adresse"]').fill("Updated family address");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByRole("status")).toHaveText("Profile saved.");
+  const photoUpload = page.waitForResponse((response) => response.url().endsWith("/api/users/upload") && response.request().method() === "POST");
+  await page.getByLabel("Choose profile photo").setInputFiles(path.resolve(__dirname, "../../apps/frontend/src/assets/img/btn.png"));
+  expect((await photoUpload).status()).toBe(201);
+  await expect(page.getByText("Profile photo updated.", { exact: true })).toBeVisible();
   await expect(page.getByText("No reservations found.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Book a Sitter" }).click();
-  await expect(page).toHaveURL(/\/auth\/booking$/);
+  await page.getByLabel("Find a babysitter").fill(sitterName);
+  await page.getByLabel("Find a babysitter").press("Enter");
+  await expect(page).toHaveURL(/\/auth\/booking\?search=/);
   await expect(page.getByRole("heading", { name: "Find a Babysitter" })).toBeVisible();
   await page.getByPlaceholder("Search by name or city...").fill(sitterName);
   await expect(page.getByRole("heading", { name: "Recommended for you" })).toBeVisible();
@@ -114,14 +120,8 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   const bookingResponse = page.waitForResponse((response) =>
     response.url().endsWith("/api/reservations") && response.request().method() === "POST"
   );
-  const confirmation = page.waitForEvent("dialog").then(async (dialog) => {
-    const message = dialog.message();
-    await dialog.accept();
-    return message;
-  });
   await page.getByRole("button", { name: "Confirm Request" }).click();
   expect((await bookingResponse).status()).toBe(201);
-  expect(await confirmation).toBe("2 weekly booking requests sent successfully!");
   await expect(page).toHaveURL(/\/profile$/);
   const reservation = page.locator("main").getByText(sitterName).last().locator("xpath=../../..");
   await expect(reservation).toContainText(new Date(`${date}T00:00:00.000Z`).toLocaleDateString());

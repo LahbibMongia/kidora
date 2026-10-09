@@ -1,7 +1,7 @@
 import asset_assets_img_team_3_800x800_jpg from "assets/img/team-3-800x800.jpg";
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useAuth } from "context/AuthContext.jsx";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import API from "service/api"; // Centralized Axios instance
 
 import Navbar from "components/Navbars/AuthNavbar.jsx";
@@ -15,14 +15,19 @@ const timeToMinutes = (value) => {
 export default function Booking() {
   const { user } = useAuth();
   const history = useHistory();
+  const location = useLocation();
+  const initialSearch = new URLSearchParams(location.search).get("search") || "";
 
   // State
   const [sitters, setSitters] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedSitter, setSelectedSitter] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const requestVersion = useRef(0);
 
   // Form State
   const [bookingForm, setBookingForm] = useState({
@@ -34,28 +39,35 @@ export default function Booking() {
   });
 
   // Load Babysitters
-  useEffect(() => {
-    fetchSitters();
-  }, []);
-
   const fetchSitters = async (query = "") => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
+      setSearchError("");
       const res = await API.get(`/users/babysitters${query ? `?search=${encodeURIComponent(query)}` : ""}`);
+      if (version !== requestVersion.current) return;
       setSitters(res.data.data || []);
       const recommendationResponse = await API.get(`/recommendations/top${query ? `?search=${encodeURIComponent(query)}` : ""}`);
+      if (version !== requestVersion.current) return;
       setRecommended(recommendationResponse.data.data || []);
     } catch (err) {
-      setRecommended([]);
+      if (version === requestVersion.current) {
+        setRecommended([]);
+        setSearchError(err.response?.data?.message || "Could not load babysitters. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchSitters(searchTerm.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchTerm(val);
-    fetchSitters(val);
   };
 
   // Calculate estimated price dynamically
@@ -65,29 +77,30 @@ export default function Booking() {
     const end = timeToMinutes(bookingForm.endTime);
     if (start === null || end === null || end <= start) return 0;
     const duration = (end - start) / 60;
-    const rate = selectedSitter.hourlyRate || 15;
+    const rate = selectedSitter.hourlyRate ?? 0;
     return (duration * rate).toFixed(2);
   };
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+    setBookingError("");
     if (!user?._id) {
-      alert("Please log in as a parent to create a reservation.");
+      setBookingError("Please log in as a parent to create a reservation.");
       return;
     }
 
     const start = timeToMinutes(bookingForm.startTime);
     const end = timeToMinutes(bookingForm.endTime);
     if (start === null || end === null) {
-      alert("Please enter a valid start time and end time.");
+      setBookingError("Enter a valid start and end time.");
       return;
     }
     if (end <= start) {
-      alert("End time must be later than start time.");
+      setBookingError("End time must be later than start time.");
       return;
     }
     if (end - start > 12 * 60) {
-      alert("A booking cannot be longer than 12 hours.");
+      setBookingError("A booking cannot be longer than 12 hours.");
       return;
     }
 
@@ -99,6 +112,7 @@ export default function Booking() {
       notes: bookingForm.notes,
     };
 
+    let created = 0;
     try {
       setSubmitting(true);
       const dates = Array.from({ length: Number(bookingForm.repeatWeeks) || 1 }, (_, index) => {
@@ -106,16 +120,16 @@ export default function Booking() {
         occurrence.setDate(occurrence.getDate() + index * 7);
         return `${occurrence.getFullYear()}-${String(occurrence.getMonth() + 1).padStart(2, "0")}-${String(occurrence.getDate()).padStart(2, "0")}`;
       });
-      let created = 0;
       for (const date of dates) {
         await API.post("/reservations", { ...payload, date });
         created += 1;
       }
-      alert(created === 1 ? "Booking request sent successfully!" : `${created} weekly booking requests sent successfully!`);
+      setBookingError("");
       setSelectedSitter(null); // Close modal
       history.push("/profile");
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to complete booking.");
+      const reason = err.response?.data?.message || "Failed to complete booking.";
+      setBookingError(created ? `${created} booking request${created === 1 ? " was" : "s were"} sent before an error: ${reason}` : reason);
     } finally {
       setSubmitting(false);
     }
@@ -146,6 +160,7 @@ export default function Booking() {
             </div>
           </div>
 
+          {searchError && <p role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{searchError}</p>}
           {recommended.length > 0 && <section aria-labelledby="recommended-heading" className="mb-8">
             <h2 id="recommended-heading" className="text-xl font-bold text-blueGray-800 mb-3">Recommended for you</h2>
             <p className="text-sm text-blueGray-500 mb-4">Ranked using public reviews, completed bookings, stated availability, and experience.</p>
@@ -153,7 +168,7 @@ export default function Booking() {
               {recommended.map((sitter, index) => <article key={sitter._id} className="bg-white rounded-lg shadow p-4 border-t-4 border-orange-400">
                 <p className="text-xs uppercase font-bold text-orange-600">#{index + 1} match · {sitter.recommendationScore}%</p>
                 <h3 className="font-bold text-lg mt-1">{sitter.name}</h3>
-                <p className="font-semibold">${sitter.hourlyRate || 15}/hr</p>
+                <p className="font-semibold">{sitter.hourlyRate != null ? `$${sitter.hourlyRate}/hr` : "Rate not listed"}</p>
                 <p className="text-sm">{sitter.reviewCount ? `${sitter.rating}/5 · ${sitter.reviewCount} recommendations` : "No reviews yet"}</p>
                 <p className="text-sm text-blueGray-600">{sitter.completedBookings} completed bookings · {sitter.availability || "Availability not listed"}</p>
                 <button type="button" onClick={() => setSelectedSitter(sitter)} className="mt-3 bg-orange-500 text-white rounded px-4 py-2">Book {sitter.name}</button>
@@ -181,7 +196,7 @@ export default function Booking() {
                   <div>
                     <div className="flex items-center gap-4 mb-4">
                       <img
-                        src={sitter.avatar || asset_assets_img_team_3_800x800_jpg}
+                        src={sitter.image && sitter.image !== "default.jpg" ? sitter.image : asset_assets_img_team_3_800x800_jpg}
                         alt={sitter.name}
                         className="w-16 h-16 rounded-full object-cover shadow"
                       />
@@ -199,14 +214,14 @@ export default function Booking() {
                     </div>
 
                     <p className="text-xs text-blueGray-600 line-clamp-3 mb-4">
-                      {sitter.bio || "Experienced, caring, and trustworthy babysitter ready to help with child supervision, activities, and homework."}
+                      {sitter.experience || "No introduction added yet."}
                     </p>
                   </div>
 
                   <div className="pt-4 border-t border-blueGray-100 flex justify-between items-center">
                     <div>
-                      <span className="text-lg font-bold text-blueGray-800">${sitter.hourlyRate || 15}</span>
-                      <span className="text-xs text-blueGray-400">/hr</span>
+                      <span className="text-lg font-bold text-blueGray-800">{sitter.hourlyRate != null ? `$${sitter.hourlyRate}` : "Rate not listed"}</span>
+                      {sitter.hourlyRate != null && <span className="text-xs text-blueGray-400">/hr</span>}
                     </div>
 
                     <button
@@ -238,6 +253,7 @@ export default function Booking() {
                 </div>
 
                 <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  {bookingError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{bookingError}</p>}
                   {/* Date Input */}
                   <div>
                     <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1">
@@ -318,7 +334,7 @@ export default function Booking() {
                   <div className="bg-blueGray-50 p-4 rounded-lg flex justify-between items-center border border-blueGray-200">
                     <div>
                       <p className="text-xs text-blueGray-500 font-semibold">Estimated Total</p>
-                      <p className="text-xs text-blueGray-400">Rate: ${selectedSitter.hourlyRate || 15}/hr</p>
+                      <p className="text-xs text-blueGray-400">Rate: {selectedSitter.hourlyRate != null ? `$${selectedSitter.hourlyRate}/hr` : "not listed"}</p>
                     </div>
                     <span className="text-xl font-extrabold text-blueGray-800">
                       ${calculateTotalCost()}
