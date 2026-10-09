@@ -59,6 +59,11 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await signIn(page, sitterEmail);
   await expect(page).toHaveURL(/\/profile-bs$/);
   await expect(page.getByText(sitterName).first()).toBeVisible();
+  await page.getByRole("button", { name: "Edit Profile" }).click();
+  await page.locator('input[name="availability"]').fill("Weekends");
+  await page.getByRole("button", { name: "Save Changes" }).click();
+  await expect(page.getByRole("status")).toHaveText("Profile saved.");
+  await page.getByRole("button", { name: "Cancel" }).click();
   await page.getByRole("button", { name: "Logout" }).click();
   await expect(page).toHaveURL(/\/$/);
 
@@ -74,6 +79,9 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByRole("heading", { name: "Household Profile" })).toBeVisible();
   await expect(page.locator('input[type="email"]')).toHaveValue(parentEmail);
   await expect(page.locator('input[type="tel"]')).toHaveValue("+15550001002");
+  await page.locator('input[name="adresse"]').fill("Updated family address");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.getByRole("status")).toHaveText("Profile saved.");
   await expect(page.getByText("No reservations found.")).toBeVisible();
 
   await page.getByRole("button", { name: "Book a Sitter" }).click();

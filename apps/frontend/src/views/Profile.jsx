@@ -6,6 +6,7 @@ import { useAuth } from "context/AuthContext.jsx";
 import { useHistory } from "react-router-dom";
 import Navbar from "components/Navbars/AuthNavbar.jsx";
 import Footer from "components/Footers/Footer.jsx";
+import API from "service/api";
 
 
 // Import your API services
@@ -27,10 +28,26 @@ const getStatusStyle = (status) => {
 };
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const history = useHistory();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [profileMessage, setProfileMessage] = useState("");
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    const values = new FormData(event.currentTarget);
+    try {
+      const response = await API.put(`/users/${user._id}`, {
+        name: values.get("name"), phone: values.get("phone"), adresse: values.get("adresse"),
+        numberOfChildren: Number(values.get("numberOfChildren")), specialRequirements: values.get("specialRequirements"),
+      });
+      setUser(response.data.data);
+      setProfileMessage("Profile saved.");
+    } catch (error) {
+      setProfileMessage(error.response?.data?.message || "Could not save your profile.");
+    }
+  };
 
   const loadReservations = useCallback(async (userId) => {
     try {
@@ -152,13 +169,13 @@ export default function Profile() {
               </div>
 
               {/* Account Information */}
-              <div className="flex flex-col w-full gap-4 pl-0 sm:pl-4">
+              <form onSubmit={saveProfile} className="flex flex-col w-full gap-4 pl-0 sm:pl-4">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex flex-col w-full sm:w-1/2 gap-1">
                     <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Name</label>
                     <input 
                       type="text" 
-                      defaultValue={user?.name || ""} 
+                      name="name" defaultValue={user?.name || ""} required
                       className="appearance-none block w-full bg-white text-blueGray-800 border border-blueGray-200 py-3 px-4 text-sm focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 shadow-sm transition-colors" 
                       style={{ borderRadius: "8px" }}
                     />
@@ -167,7 +184,7 @@ export default function Profile() {
                     <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Email</label>
                     <input 
                       type="email" 
-                      defaultValue={user?.email || ""} 
+                      defaultValue={user?.email || ""} readOnly
                       className="appearance-none block w-full bg-white text-blueGray-800 border border-blueGray-200 py-3 px-4 text-sm focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 shadow-sm transition-colors" 
                       style={{ borderRadius: "8px" }}
                     />
@@ -177,7 +194,7 @@ export default function Profile() {
                   <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Phone</label>
                   <input 
                     type="tel" 
-                    defaultValue={user?.phone || ""}
+                    name="phone" defaultValue={user?.phone || ""} required
                     className="appearance-none block w-full bg-white text-blueGray-800 border border-blueGray-200 py-3 px-4 text-sm focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 shadow-sm transition-colors" 
                     style={{ borderRadius: "8px" }}
                   />
@@ -187,28 +204,23 @@ export default function Profile() {
                   <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Address</label>
                   <input 
                     type="text" 
-                    defaultValue={user?.adresse || ""} 
+                    name="adresse" defaultValue={user?.adresse || ""}
                     className="appearance-none block w-full bg-white text-blueGray-800 border border-blueGray-200 py-3 px-4 text-sm focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 shadow-sm transition-colors" 
                     style={{ borderRadius: "8px" }}
                   />
                 </div>
 
-                {/* Preferences */}
-                <div className="mt-4">
-                  <p className="text-xs font-bold text-blueGray-400 uppercase tracking-widest mb-3">Preferences</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-blueGray-100 text-blueGray-700 text-xs font-bold px-4 py-2" style={{ borderRadius: "20px" }}>
-                      Educational games
-                    </span>
-                    <span className="bg-blueGray-100 text-blueGray-700 text-xs font-bold px-4 py-2" style={{ borderRadius: "20px" }}>
-                      Outdoor play
-                    </span>
-                    <span className="bg-blueGray-100 text-blueGray-700 text-xs font-bold px-4 py-2" style={{ borderRadius: "20px" }}>
-                      Arts & Crafts
-                    </span>
-                  </div>
+                <div className="flex flex-col w-full gap-1">
+                  <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Number of children</label>
+                  <input type="number" min="0" name="numberOfChildren" defaultValue={user?.numberOfChildren ?? 0} className="border rounded p-3" />
                 </div>
-              </div>
+                <div className="flex flex-col w-full gap-1">
+                  <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Special requirements</label>
+                  <textarea name="specialRequirements" defaultValue={user?.specialRequirements || ""} className="border rounded p-3" />
+                </div>
+                <button type="submit" className="self-start bg-blueGray-800 text-white rounded px-5 py-3">Save profile</button>
+                {profileMessage && <p role="status">{profileMessage}</p>}
+              </form>
             </div>
           </div>
 
