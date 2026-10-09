@@ -29,6 +29,7 @@ export default function Booking() {
     startTime: "",
     endTime: "",
     notes: "",
+    repeatWeeks: 1,
   });
 
   // Load Babysitters
@@ -96,8 +97,17 @@ export default function Booking() {
 
     try {
       setSubmitting(true);
-      await API.post("/reservations", payload);
-      alert("Booking request sent successfully!");
+      const dates = Array.from({ length: Number(bookingForm.repeatWeeks) || 1 }, (_, index) => {
+        const occurrence = new Date(`${bookingForm.date}T00:00:00`);
+        occurrence.setDate(occurrence.getDate() + index * 7);
+        return `${occurrence.getFullYear()}-${String(occurrence.getMonth() + 1).padStart(2, "0")}-${String(occurrence.getDate()).padStart(2, "0")}`;
+      });
+      let created = 0;
+      for (const date of dates) {
+        await API.post("/reservations", { ...payload, date });
+        created += 1;
+      }
+      alert(created === 1 ? "Booking request sent successfully!" : `${created} weekly booking requests sent successfully!`);
       setSelectedSitter(null); // Close modal
       history.push("/profile");
     } catch (err) {
@@ -222,6 +232,23 @@ export default function Booking() {
                       onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                       className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1" htmlFor="repeatWeeks">
+                      Repeat weekly
+                    </label>
+                    <select
+                      id="repeatWeeks"
+                      value={bookingForm.repeatWeeks}
+                      onChange={(e) => setBookingForm({ ...bookingForm, repeatWeeks: Number(e.target.value) })}
+                      className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
+                        <option key={count} value={count}>{count === 1 ? "One booking" : `${count} weekly bookings`}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-blueGray-500 mt-1">Each date is sent as a separate request. Conflicting dates are reported by the sitter.</p>
                   </div>
 
                   {/* Time Inputs */}

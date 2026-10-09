@@ -199,12 +199,13 @@ async function changeStatus(req, res, { status, actorRole, message, notifyUser }
     if (req.auth.role !== "admin" && (req.auth.role !== actorRole || String(existing[actorRole === "parent" ? "parent" : "babysitter"]) !== String(req.auth._id))) {
       return res.status(403).json({ success: false, message: "Insufficient permissions" });
     }
+    const allowedStatuses = actorRole === "parent" ? ["pending", "confirmed"] : ["pending"];
     const reservation = await Reservation.findOneAndUpdate(
-      { _id: existing._id, status: "pending" },
+      { _id: existing._id, status: { $in: allowedStatuses } },
       { $set: { status } },
       { new: true, runValidators: true }
     );
-    if (!reservation) return res.status(409).json({ success: false, message: "Only pending reservations can change status" });
+    if (!reservation) return res.status(409).json({ success: false, message: "This reservation can no longer change status" });
     if (status === "cancelled") await releaseSlots(reservation._id);
     await notify(reservation[notifyUser], message);
     return res.json({ success: true, message, data: reservation });

@@ -87,6 +87,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   const dateInput = page.locator('input[type="date"]');
   const times = page.locator('input[type="time"]');
   await dateInput.fill(date);
+  await page.locator("#repeatWeeks").selectOption("2");
   await times.nth(0).fill("10:00");
   await times.nth(1).fill("12:00");
   await expect(page.getByText("$40.00")).toBeVisible();
@@ -102,11 +103,32 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   });
   await page.getByRole("button", { name: "Confirm Request" }).click();
   expect((await bookingResponse).status()).toBe(201);
-  expect(await confirmation).toBe("Booking request sent successfully!");
+  expect(await confirmation).toBe("2 weekly booking requests sent successfully!");
   await expect(page).toHaveURL(/\/profile$/);
   const reservation = page.locator("main").getByText(sitterName).last().locator("xpath=../../..");
   await expect(reservation).toContainText(new Date(`${date}T00:00:00.000Z`).toLocaleDateString());
   await expect(reservation).toContainText("10:00 - 12:00");
   await expect(reservation.getByText("pending", { exact: true })).toBeVisible();
+  await expect(page.getByText("pending", { exact: true })).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "My Children" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Logout" }).click();
+  await signIn(page, sitterEmail);
+  await expect(page).toHaveURL(/\/profile-bs$/);
+  await expect(page.getByRole("heading", { name: "Booking plan" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(2);
+  await page.getByRole("button", { name: "Accept" }).first().click();
+  await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Decline" }).click();
+  await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Logout" }).click();
+  await signIn(page, parentEmail);
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
+  const cancelButton = page.getByRole("button", { name: "Cancel Booking" }).first();
+  page.once("dialog", (dialog) => dialog.accept());
+  await cancelButton.click();
+  await expect(page.getByText("cancelled", { exact: true })).toHaveCount(2);
 });

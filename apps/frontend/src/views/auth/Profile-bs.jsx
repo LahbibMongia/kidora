@@ -1,14 +1,40 @@
 import asset_assets_img_team_2_800x800_jpg from "assets/img/team-2-800x800.jpg";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "context/AuthContext.jsx";
 import { createReservation } from "../../service/restApiReservation";
+import { getBabysitterReservations, confirmReservation, rejectReservation } from "../../service/restApiReservation";
 import Navbar from "components/Navbars/AuthNavbar";
 import Footer from "components/Footers/Footer";
 
 export default function Profile() {
   const history = useHistory();
   const { currentUser } = useAuth(); // Read currentUser from AuthContext
+  const [reservations, setReservations] = useState([]);
+  const [reservationError, setReservationError] = useState("");
+
+  const loadReservations = useCallback(async () => {
+    if (!currentUser?._id) return;
+    try {
+      const response = await getBabysitterReservations(currentUser._id);
+      setReservations(response.data.data || []);
+      setReservationError("");
+    } catch (error) {
+      setReservationError("Could not load your booking plan.");
+    }
+  }, [currentUser?._id]);
+
+  useEffect(() => { loadReservations(); }, [loadReservations]);
+
+  const updateReservation = async (id, action) => {
+    try {
+      if (action === "confirm") await confirmReservation(id);
+      else await rejectReservation(id);
+      await loadReservations();
+    } catch (error) {
+      setReservationError(error.response?.data?.message || "Could not update this request.");
+    }
+  };
 
   // Mocking babysitter profile details for this view. 
   // In a real application, you would fetch this dynamic babysitter object from your API or pass it via route state.
@@ -152,6 +178,33 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      <section aria-labelledby="booking-plan-heading" className="container mx-auto px-4 max-w-5xl pt-24">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 id="booking-plan-heading" className="text-2xl font-bold text-blueGray-800 mb-4">Booking plan</h2>
+          {reservationError && <p role="alert" className="text-red-600 mb-3">{reservationError}</p>}
+          {reservations.length === 0 ? <p className="text-blueGray-500">No bookings in your plan yet.</p> : (
+            <div className="space-y-3">
+              {reservations.map((booking) => (
+                <article key={booking._id} className="border rounded-lg p-4 flex flex-wrap justify-between gap-3 items-center">
+                  <div>
+                    <p className="font-semibold">{booking.parent?.name || "Parent"}</p>
+                    <p>{new Date(booking.date).toLocaleDateString()} · {booking.startTime || booking.timeSlot} {booking.endTime ? `- ${booking.endTime}` : ""}</p>
+                    {booking.notes && <p className="text-sm text-blueGray-600">{booking.notes}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="capitalize">{booking.status}</span>
+                    {booking.status === "pending" && <>
+                      <button type="button" onClick={() => updateReservation(booking._id, "confirm")} className="bg-green-600 text-white rounded px-3 py-2">Accept</button>
+                      <button type="button" onClick={() => updateReservation(booking._id, "reject")} className="bg-red-600 text-white rounded px-3 py-2">Decline</button>
+                    </>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       <main className="profile-page">
         <section className="relative block h-500-px">
