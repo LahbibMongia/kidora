@@ -234,7 +234,7 @@ export default function Profile() {
 
                 <div className="text-center mt-12">
                   <h3 className="text-4xl font-semibold leading-normal mb-2 text-blueGray-700">
-                    {babysitter.name}
+                    {currentUser?.name || babysitter.name}
                   </h3>
                   <div className="text-sm leading-normal mt-0 mb-2 text-blueGray-400 font-bold">
                     <i className="fas fa-map-marker-alt mr-2 text-lg text-blueGray-400"></i>

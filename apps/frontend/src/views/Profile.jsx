@@ -177,7 +177,7 @@ export default function Profile() {
                   <label className="text-xs font-bold text-blueGray-500 uppercase tracking-wide">Phone</label>
                   <input 
                     type="tel" 
-                    defaultValue={user?.tel || ""} 
+                    defaultValue={user?.phone || ""}
                     className="appearance-none block w-full bg-white text-blueGray-800 border border-blueGray-200 py-3 px-4 text-sm focus:outline-none focus:border-blueGray-800 focus:ring-1 focus:ring-blueGray-800 shadow-sm transition-colors" 
                     style={{ borderRadius: "8px" }}
                   />
@@ -279,7 +279,7 @@ export default function Profile() {
                         </div>
                         <div className="pl-4">
                           <h4 className="font-bold text-blueGray-800 mb-1">
-                            {res.sitterName || res.sitter?.name || "Babysitter"}
+                          {res.sitterName || res.sitter?.name || res.babysitter?.name || "Babysitter"}
                           </h4>
                           <p className="text-sm font-semibold text-blueGray-500">
                             <i className="far fa-calendar-alt mr-2"></i>

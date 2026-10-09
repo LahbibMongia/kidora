@@ -8,9 +8,11 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
+    "test:e2e": "playwright test",
     "start": "npm run start --workspace=@kidora/backend"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "turbo": "^2.5.0"
   },
   "packageManager": "npm@10.9.7",

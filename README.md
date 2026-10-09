@@ -39,6 +39,14 @@ administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and
 `ADMIN_PHONE` in `apps/backend/.env`, then run `make create-admin`. Public
 registration supports parent and babysitter accounts only.
 
+Populate the local development database with demo accounts and bookings by
+running `make seed-dev`. The command adds or refreshes three parents, four
+babysitters, and four bookings; it does not delete other database records. All
+seeded accounts use password `KidoraDemo123` and the command prints their email
+addresses. Re-running the command refreshes these demo accounts and resets
+their passwords to the shared demo password. It refuses to run in production
+or against a non-local MongoDB instance.
+
 Use `make infra-up`, `make infra-down`, and `make infra-logs` to manage MongoDB
 separately. `make help` lists available commands. MongoDB data persists in a
 named Docker volume when stopped; `docker compose -f compose.yaml down -v`
@@ -50,6 +58,18 @@ default. Set `VITE_API_URL` in `apps/frontend/.env` to override the API base URL
 Run `make build` to build the frontend and validate the backend JavaScript.
 The API listens on port `5000` by default and allows requests from
 `http://localhost:3000`; use `FRONTEND_URL` to change the allowed origin.
+
+## End-to-end tests
+
+Install dependencies with `make install`, start MongoDB with `make infra-up`,
+then run `npm run test:e2e`. Playwright starts the API and frontend and runs a
+browser journey that registers a babysitter and parent, signs in, creates a
+booking, and checks the reservation on the parent profile. The test API uses
+the separate `kidora_e2e` database on local MongoDB (`127.0.0.1:27017`), leaving
+the normal `kidora` database untouched. It runs the test API on port `5001` and
+the frontend on port `3001`, so existing development servers on the normal app
+ports do not interfere. Playwright also needs its Chromium browser installed;
+run `npx playwright install chromium` if the browser is missing.
 
 ## Existing MongoDB data
 

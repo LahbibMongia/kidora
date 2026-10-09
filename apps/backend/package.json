@@ -8,6 +8,7 @@
     "dev": "nodemon app.js",
     "build": "node scripts/checkSyntax.js",
     "create-admin": "node scripts/createAdmin.js",
+    "seed:dev": "node scripts/seedDevData.js",
     "migrate:legacy": "node scripts/migrateLegacyData.js"
   },
   "dependencies": {

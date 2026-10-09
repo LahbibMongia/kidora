@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const sourceDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "src");
 const aliases = ["assets", "components", "context", "layouts", "service", "views"];
+const port = Number(process.env.PORT || 3000);
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || "http://127.0.0.1:5000";
 
 export default defineConfig({
   plugins: [react()],
@@ -14,11 +16,11 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 3000,
+    port,
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:5000",
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },

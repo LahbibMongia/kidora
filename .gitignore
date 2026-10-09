@@ -8,6 +8,8 @@ build/
 dist/
 .output/
 coverage/
+playwright-report/
+test-results/
 
 # Local environment and secrets; keep example templates versioned
 .env*
