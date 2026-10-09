@@ -304,6 +304,11 @@ async function main() {
       message: "Your shared household booking with Lina is confirmed.",
     }),
     upsertDemoNotification({
+      user: users.get("parent.casey"),
+      message: "New message from Lina Haddad.",
+      type: "message",
+    }),
+    upsertDemoNotification({
       user: users.get("parent.alex"),
       message: "You have a pending demo booking request with Lina.",
     }),
