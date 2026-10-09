@@ -118,7 +118,7 @@ export default function Profile() {
               </button>
 
               <button 
-                onClick={() => history.push("auth/booking")} // Redirects to the sitter selection page not yet created
+                onClick={() => history.push("/auth/booking")}
                 className="hover-scale-102 bg-blueGray-800 text-white active:bg-blueGray-900 font-bold uppercase text-xs px-6 py-2 shadow hover:shadow-md outline-none focus:outline-none shrink-0" 
                 style={{ borderRadius: "8px" }}
               >

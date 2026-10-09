@@ -27,10 +27,11 @@ database. Start the database and both app servers:
 make dev
 ```
 
-The frontend is at <http://localhost:3000>; the API is at
-<http://localhost:5000>. The frontend defaults to `http://localhost:5000/api`.
-Copy `apps/frontend/.env.example` to `apps/frontend/.env` only when you need to
-set a different `VITE_API_URL`.
+The frontend is at <http://localhost:3000>; the API health endpoint is at
+<http://localhost:5000/health>. In development, frontend requests to `/api`
+are proxied to the API server, avoiding cross-origin requests. Copy
+`apps/frontend/.env.example` to `apps/frontend/.env` only when you need to set
+a different `VITE_API_URL` (for example, when deploying the frontend separately).
 
 To run the production-style local server, use `make start`. It starts MongoDB,
 builds the frontend, and serves that build from the API process. To create an
@@ -43,9 +44,8 @@ separately. `make help` lists available commands. MongoDB data persists in a
 named Docker volume when stopped; `docker compose -f compose.yaml down -v`
 removes the volume and its data.
 
-The Vite frontend runs on `http://localhost:3000` and uses
-`http://localhost:5000/api` by default. Set `VITE_API_URL` in
-`apps/frontend/.env` to override the API base URL.
+The Vite frontend runs on `http://localhost:3000` and uses the `/api` proxy by
+default. Set `VITE_API_URL` in `apps/frontend/.env` to override the API base URL.
 
 Run `make build` to build the frontend and validate the backend JavaScript.
 The API listens on port `5000` by default and allows requests from

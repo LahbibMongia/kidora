@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "KidOra web frontend",
-  "repository": "https://github.com/creativetimofficial/notus-react",
   "license": "MIT",
   "dependencies": {
     "@fortawesome/fontawesome-free": "5.15.3",

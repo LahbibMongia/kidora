@@ -7,6 +7,11 @@ import API from "service/api"; // Centralized Axios instance
 import Navbar from "components/Navbars/AuthNavbar.jsx";
 import Footer from "components/Footers/Footer.jsx";
 
+const timeToMinutes = (value) => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value || "");
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+};
+
 export default function Booking() {
   const { user } = useAuth();
   const history = useHistory();
@@ -51,10 +56,10 @@ export default function Booking() {
   // Calculate estimated price dynamically
   const calculateTotalCost = () => {
     if (!bookingForm.startTime || !bookingForm.endTime || !selectedSitter) return 0;
-    const start = parseFloat(bookingForm.startTime.split(":")[0]) + parseFloat(bookingForm.startTime.split(":")[1]) / 60;
-    const end = parseFloat(bookingForm.endTime.split(":")[0]) + parseFloat(bookingForm.endTime.split(":")[1]) / 60;
-    const duration = end - start;
-    if (duration <= 0) return 0;
+    const start = timeToMinutes(bookingForm.startTime);
+    const end = timeToMinutes(bookingForm.endTime);
+    if (start === null || end === null || end <= start) return 0;
+    const duration = (end - start) / 60;
     const rate = selectedSitter.hourlyRate || 15;
     return (duration * rate).toFixed(2);
   };
@@ -66,9 +71,18 @@ export default function Booking() {
       return;
     }
 
-    const totalCost = calculateTotalCost();
-    if (totalCost <= 0) {
-      alert("Please enter a valid Start Time and End Time.");
+    const start = timeToMinutes(bookingForm.startTime);
+    const end = timeToMinutes(bookingForm.endTime);
+    if (start === null || end === null) {
+      alert("Please enter a valid start time and end time.");
+      return;
+    }
+    if (end <= start) {
+      alert("End time must be later than start time.");
+      return;
+    }
+    if (end - start > 12 * 60) {
+      alert("A booking cannot be longer than 12 hours.");
       return;
     }
 
@@ -232,6 +246,7 @@ export default function Booking() {
                       <input
                         type="time"
                         required
+                        min={bookingForm.startTime || undefined}
                         value={bookingForm.endTime}
                         onChange={(e) => setBookingForm({ ...bookingForm, endTime: e.target.value })}
                         className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
