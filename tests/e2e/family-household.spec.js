@@ -15,6 +15,7 @@ async function register(page, name, email, phone) {
 }
 
 async function signIn(page, email) {
+  await page.goto("/auth/login");
   await page.getByPlaceholder("Email").fill(email);
   await page.getByPlaceholder("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
@@ -23,6 +24,13 @@ async function signIn(page, email) {
 test("two parent accounts share a household, children, and bookings", async ({ page }) => {
   const firstEmail = uniqueEmail("parent-one");
   const secondEmail = uniqueEmail("parent-two");
+  const sitterEmail = uniqueEmail("sitter");
+  const sitterResponse = await page.request.post("http://127.0.0.1:5001/api/users/register", { data: {
+    name: "Household Demo Sitter", email: sitterEmail, phone: "+15550002003", password,
+    role: "babysitter", hourlyRate: 21, experienceYears: 3,
+  } });
+  expect(sitterResponse.status()).toBe(201);
+  const sitterId = (await sitterResponse.json()).user._id;
   await register(page, "Household Parent One", firstEmail, "+15550002001");
   await register(page, "Household Parent Two", secondEmail, "+15550002002");
 
@@ -38,6 +46,16 @@ test("two parent accounts share a household, children, and bookings", async ({ p
   const token = await page.locator("output[aria-label='Invitation code']").textContent();
   expect(token).toBeTruthy();
 
+  const parentToken = await page.evaluate(() => localStorage.getItem("token"));
+  const bookingDate = new Date();
+  bookingDate.setDate(bookingDate.getDate() + 45);
+  const date = `${bookingDate.getFullYear()}-${String(bookingDate.getMonth() + 1).padStart(2, "0")}-${String(bookingDate.getDate()).padStart(2, "0")}`;
+  const booking = await page.request.post("http://127.0.0.1:5001/api/reservations", {
+    headers: { Authorization: `Bearer ${parentToken}` },
+    data: { babysitter: sitterId, date, startTime: "16:00", endTime: "18:00", notes: "Shared family booking" },
+  });
+  expect(booking.status()).toBe(201);
+
   await page.getByRole("button", { name: "Logout" }).click();
   await signIn(page, secondEmail);
   await expect(page).toHaveURL(/\/profile$/);
@@ -46,4 +64,5 @@ test("two parent accounts share a household, children, and bookings", async ({ p
   await expect(page.getByRole("status")).toHaveText("You joined the shared household.");
   await expect(page.getByLabel("Child 1 name")).toHaveValue("Robin");
   await expect(page.getByText(firstEmail)).toBeVisible();
+  await expect(page.getByText("Household Demo Sitter")).toBeVisible();
 });

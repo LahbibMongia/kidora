@@ -13,7 +13,14 @@ exports.createAvis = async (req, res) => {
     const reservation = await Reservation.findById(req.body.reservation);
     if (!reservation) return res.status(404).json({ message: "Reservation not found" });
     if (!["confirmed", "completed"].includes(reservation.status)) return res.status(409).json({ message: "Only confirmed or completed bookings can be reviewed" });
-    const isParent = req.auth.role === "parent" && String(reservation.parent) === String(req.auth._id);
+    let isParent = req.auth.role === "parent" && String(reservation.parent) === String(req.auth._id);
+    if (req.auth.role === "parent" && !isParent) {
+      const [requester, bookingParent] = await Promise.all([
+        User.findById(req.auth._id).select("household"),
+        User.findById(reservation.parent).select("household"),
+      ]);
+      isParent = Boolean(requester?.household && String(requester.household) === String(bookingParent?.household));
+    }
     const isBabysitter = req.auth.role === "babysitter" && String(reservation.babysitter) === String(req.auth._id);
     if (!isParent && !isBabysitter) return res.status(403).json({ message: "Only booking participants can leave a review" });
     const revieweeId = isParent ? reservation.babysitter : reservation.parent;

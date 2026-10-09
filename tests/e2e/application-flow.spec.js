@@ -156,11 +156,16 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
   await expect(page.getByText("Your reservation has been confirmed")).toBeVisible();
   await expect(page.getByText("Your reservation has been declined")).toBeVisible();
+  const unreadNotificationCount = await page.getByRole("button", { name: "Mark read" }).count();
+  expect(unreadNotificationCount).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Mark read" }).first().click();
+  await expect(page.getByRole("button", { name: "Mark read" })).toHaveCount(unreadNotificationCount - 1);
   await page.getByRole("button", { name: `Message ${sitterName}` }).click();
   await expect(page.getByText("Thanks, I have noted that.")).toBeVisible();
   await page.getByLabel("Review comment").fill("Great communication and care.");
+  const reviewResponse = page.waitForResponse((response) => response.url().endsWith("/api/reviews") && response.request().method() === "POST");
   await page.getByRole("button", { name: "Publish review" }).click();
-  await expect(page.getByRole("status")).toHaveText("Review published.");
+  expect((await reviewResponse).status()).toBe(201);
   const publicReviews = await page.request.get(`http://127.0.0.1:5001/api/reviews/babysitter/${sitterId}`);
   expect(publicReviews.ok()).toBeTruthy();
   expect((await publicReviews.json()).data).toHaveLength(1);
