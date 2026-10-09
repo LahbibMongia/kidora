@@ -1,0 +1,20 @@
+{
+  "name": "kidora-project",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "start": "npm run start --workspace=@kidora/backend"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "npm@10.9.7",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

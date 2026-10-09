@@ -1,0 +1,295 @@
+import asset_assets_img_team_3_800x800_jpg from "assets/img/team-3-800x800.jpg";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "context/AuthContext.jsx";
+import { useHistory } from "react-router-dom";
+import API from "service/api"; // Centralized Axios instance
+
+import Navbar from "components/Navbars/AuthNavbar.jsx";
+import Footer from "components/Footers/Footer.jsx";
+
+export default function Booking() {
+  const { user } = useAuth();
+  const history = useHistory();
+
+  // State
+  const [sitters, setSitters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSitter, setSelectedSitter] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form State
+  const [bookingForm, setBookingForm] = useState({
+    date: "",
+    startTime: "",
+    endTime: "",
+    notes: "",
+  });
+
+  // Load Babysitters
+  useEffect(() => {
+    fetchSitters();
+  }, []);
+
+  const fetchSitters = async (query = "") => {
+    try {
+      setLoading(true);
+      const res = await API.get(`/users/babysitters${query ? `?search=${encodeURIComponent(query)}` : ""}`);
+      setSitters(res.data.data || []);
+    } catch (err) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    fetchSitters(val);
+  };
+
+  // Calculate estimated price dynamically
+  const calculateTotalCost = () => {
+    if (!bookingForm.startTime || !bookingForm.endTime || !selectedSitter) return 0;
+    const start = parseFloat(bookingForm.startTime.split(":")[0]) + parseFloat(bookingForm.startTime.split(":")[1]) / 60;
+    const end = parseFloat(bookingForm.endTime.split(":")[0]) + parseFloat(bookingForm.endTime.split(":")[1]) / 60;
+    const duration = end - start;
+    if (duration <= 0) return 0;
+    const rate = selectedSitter.hourlyRate || 15;
+    return (duration * rate).toFixed(2);
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    if (!user?._id) {
+      alert("Please log in as a parent to create a reservation.");
+      return;
+    }
+
+    const totalCost = calculateTotalCost();
+    if (totalCost <= 0) {
+      alert("Please enter a valid Start Time and End Time.");
+      return;
+    }
+
+    const payload = {
+      babysitter: selectedSitter._id,
+      date: bookingForm.date,
+      startTime: bookingForm.startTime,
+      endTime: bookingForm.endTime,
+      notes: bookingForm.notes,
+    };
+
+    try {
+      setSubmitting(true);
+      await API.post("/reservations", payload);
+      alert("Booking request sent successfully!");
+      setSelectedSitter(null); // Close modal
+      history.push("/profile");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to complete booking.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <Navbar transparent />
+      <div className="bg-blueGray-100 min-h-screen pb-16 pt-24">
+        <main className="container mx-auto px-4 max-w-6xl">
+          
+          {/* Header & Search */}
+          <div className="flex flex-col md:flex-row justify-between items-center my-6 gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-blueGray-800">Find a Babysitter</h1>
+              <p className="text-sm text-blueGray-500">Discover trusted & verified sitters near you</p>
+            </div>
+            
+            <div className="relative w-full md:w-80">
+              <input
+                type="text"
+                placeholder="Search by name or city..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-2 border border-blueGray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+              <i className="fas fa-search absolute left-3 top-3 text-blueGray-400"></i>
+            </div>
+          </div>
+
+          {/* Sitters Grid */}
+          {loading ? (
+            <div className="text-center py-20 text-blueGray-500 font-semibold">
+              Loading available babysitters...
+            </div>
+          ) : sitters.length === 0 ? (
+            <div className="bg-white rounded-lg p-12 text-center shadow">
+              <i className="fas fa-user-slash text-4xl text-blueGray-300 mb-3"></i>
+              <p className="text-blueGray-600 font-medium">No babysitters found matching your search criteria.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sitters.map((sitter) => (
+                <div
+                  key={sitter._id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 flex flex-col justify-between border border-blueGray-100"
+                >
+                  <div>
+                    <div className="flex items-center gap-4 mb-4">
+                      <img
+                        src={sitter.avatar || asset_assets_img_team_3_800x800_jpg}
+                        alt={sitter.name}
+                        className="w-16 h-16 rounded-full object-cover shadow"
+                      />
+                      <div>
+                        <h3 className="font-bold text-lg text-blueGray-800">{sitter.name}</h3>
+                        <p className="text-xs text-blueGray-500">
+                          <i className="fas fa-map-marker-alt mr-1 text-orange-500"></i>
+                          {sitter.adresse || "Location not specified"}
+                        </p>
+                        <div className="text-xs text-amber-500 font-bold mt-1">
+                          <i className="fas fa-star mr-1"></i>
+                          {sitter.rating || "5.0"} (Verified Sitter)
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-blueGray-600 line-clamp-3 mb-4">
+                      {sitter.bio || "Experienced, caring, and trustworthy babysitter ready to help with child supervision, activities, and homework."}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-blueGray-100 flex justify-between items-center">
+                    <div>
+                      <span className="text-lg font-bold text-blueGray-800">${sitter.hourlyRate || 15}</span>
+                      <span className="text-xs text-blueGray-400">/hr</span>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedSitter(sitter)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase px-4 py-2.5 rounded-lg shadow transition-colors"
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Interactive Booking Modal */}
+          {selectedSitter && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-fade-in">
+                
+                {/* Modal Header */}
+                <div className="flex justify-between items-center pb-3 border-b mb-4">
+                  <h3 className="text-lg font-bold text-blueGray-800">Book {selectedSitter.name}</h3>
+                  <button
+                    onClick={() => setSelectedSitter(null)}
+                    className="text-blueGray-400 hover:text-blueGray-700 text-xl font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  {/* Date Input */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      min={new Date().toISOString().split("T")[0]}
+                      value={bookingForm.date}
+                      onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                      className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    />
+                  </div>
+
+                  {/* Time Inputs */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1">
+                        Start Time
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={bookingForm.startTime}
+                        onChange={(e) => setBookingForm({ ...bookingForm, startTime: e.target.value })}
+                        className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1">
+                        End Time
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={bookingForm.endTime}
+                        onChange={(e) => setBookingForm({ ...bookingForm, endTime: e.target.value })}
+                        className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Special Notes */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-blueGray-600 mb-1">
+                      Notes for Babysitter (Optional)
+                    </label>
+                    <textarea
+                      rows="2"
+                      placeholder="Specify allergies, bedtime routines, etc."
+                      value={bookingForm.notes}
+                      onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                      className="w-full border rounded-lg p-2.5 text-sm text-blueGray-700 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    ></textarea>
+                  </div>
+
+                  {/* Dynamic Cost Summary */}
+                  <div className="bg-blueGray-50 p-4 rounded-lg flex justify-between items-center border border-blueGray-200">
+                    <div>
+                      <p className="text-xs text-blueGray-500 font-semibold">Estimated Total</p>
+                      <p className="text-xs text-blueGray-400">Rate: ${selectedSitter.hourlyRate || 15}/hr</p>
+                    </div>
+                    <span className="text-xl font-extrabold text-blueGray-800">
+                      ${calculateTotalCost()}
+                    </span>
+                  </div>
+
+                  {/* Submit Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSitter(null)}
+                      className="w-1/2 py-3 text-xs font-bold uppercase text-blueGray-500 hover:text-blueGray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-1/2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase py-3 rounded-lg shadow transition-colors disabled:opacity-50"
+                    >
+                      {submitting ? "Sending..." : "Confirm Request"}
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+      <Footer />
+    </>
+  );
+}

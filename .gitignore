@@ -1,0 +1,23 @@
+# Dependencies and generated build output
+node_modules/
+.turbo/
+.vite/
+.cache/
+.npm/
+build/
+dist/
+.output/
+coverage/
+
+# Local environment and secrets; keep example templates versioned
+.env*
+!.env.example
+!.env.*.example
+
+# Temporary files and operating system noise
+tmp/
+temp/
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
