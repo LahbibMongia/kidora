@@ -174,7 +174,7 @@ export default function Booking() {
                         </p>
                         <div className="text-xs text-amber-500 font-bold mt-1">
                           <i className="fas fa-star mr-1"></i>
-                          {sitter.rating || "5.0"} (Verified Sitter)
+                          {sitter.reviewCount ? `${sitter.rating} · ${sitter.reviewCount} recommendation${sitter.reviewCount === 1 ? "" : "s"}` : "New sitter"}
                         </div>
                       </div>
                     </div>

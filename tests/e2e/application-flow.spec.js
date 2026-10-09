@@ -58,6 +58,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   });
   await signIn(page, sitterEmail);
   await expect(page).toHaveURL(/\/profile-bs$/);
+  const sitterId = await page.evaluate(() => JSON.parse(localStorage.getItem("user"))._id);
   await expect(page.getByText(sitterName).first()).toBeVisible();
   await page.getByRole("button", { name: "Edit Profile" }).click();
   await page.locator('input[name="availability"]').fill("Weekends");
@@ -127,6 +128,9 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(2);
   await page.getByRole("button", { name: "Accept" }).first().click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await page.getByLabel("Review comment").fill("Reliable and kind family.");
+  await page.getByRole("button", { name: "Publish review" }).click();
+  await expect(page.getByRole("status")).toHaveText("Review published.");
   await page.getByRole("button", { name: "Decline" }).click();
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
 
@@ -135,6 +139,12 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
+  await page.getByLabel("Review comment").fill("Great communication and care.");
+  await page.getByRole("button", { name: "Publish review" }).click();
+  await expect(page.getByRole("status")).toHaveText("Review published.");
+  const publicReviews = await page.request.get(`http://127.0.0.1:5001/api/reviews/babysitter/${sitterId}`);
+  expect(publicReviews.ok()).toBeTruthy();
+  expect((await publicReviews.json()).data).toHaveLength(1);
   const cancelButton = page.getByRole("button", { name: "Cancel Booking" }).first();
   page.once("dialog", (dialog) => dialog.accept());
   await cancelButton.click();

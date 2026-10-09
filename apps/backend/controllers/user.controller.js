@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
+const Avis = require("../models/avis.model");
 
 const TOKEN_SECONDS = 3 * 24 * 60 * 60;
 const editableFields = [
@@ -87,7 +88,20 @@ exports.getBabysitters = async (req, res) => {
       query.hourlyRate = { $lte: maxRate };
     }
     const users = await User.find(query).select("-password -loginAttempts").limit(100);
-    res.json({ message: "Babysitters fetched successfully", data: users });
+    const ids = users.map((user) => user._id);
+    const ratings = await Avis.aggregate([
+      { $match: { $or: [{ reviewee: { $in: ids } }, { babysitter: { $in: ids } }] } },
+      { $group: { _id: { $ifNull: ["$reviewee", "$babysitter"] }, average: { $avg: "$rating" }, count: { $sum: 1 } } },
+    ]);
+    const ratingById = new Map(ratings.map((rating) => [String(rating._id), rating]));
+    const data = users.map((user) => {
+      const result = user.toObject();
+      const rating = ratingById.get(String(user._id));
+      result.rating = rating ? Number(rating.average.toFixed(1)) : null;
+      result.reviewCount = rating?.count || 0;
+      return result;
+    });
+    res.json({ message: "Babysitters fetched successfully", data });
   } catch (error) {
     apiError(res, error);
   }

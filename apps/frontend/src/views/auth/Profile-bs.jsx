@@ -4,6 +4,8 @@ import { useHistory } from "react-router-dom";
 import { useAuth } from "context/AuthContext.jsx";
 import { createReservation } from "../../service/restApiReservation";
 import { getBabysitterReservations, confirmReservation, rejectReservation } from "../../service/restApiReservation";
+import API from "service/api";
+import ReviewForm from "components/ReviewForm.jsx";
 import Navbar from "components/Navbars/AuthNavbar";
 import Footer from "components/Footers/Footer";
 
@@ -12,6 +14,7 @@ export default function Profile() {
   const { currentUser } = useAuth(); // Read currentUser from AuthContext
   const [reservations, setReservations] = useState([]);
   const [reservationError, setReservationError] = useState("");
+  const [sitterReviews, setSitterReviews] = useState([]);
 
   const loadReservations = useCallback(async () => {
     if (!currentUser?._id) return;
@@ -25,6 +28,15 @@ export default function Profile() {
   }, [currentUser?._id]);
 
   useEffect(() => { loadReservations(); }, [loadReservations]);
+
+  const loadReviews = useCallback(async () => {
+    if (!currentUser?._id) return;
+    try {
+      const response = await API.get(`/reviews/babysitter/${currentUser._id}`);
+      setSitterReviews(response.data.data || []);
+    } catch (error) { setSitterReviews([]); }
+  }, [currentUser?._id]);
+  useEffect(() => { loadReviews(); }, [loadReviews]);
 
   const updateReservation = async (id, action) => {
     try {
@@ -191,6 +203,7 @@ export default function Profile() {
                     <p className="font-semibold">{booking.parent?.name || "Parent"}</p>
                     <p>{new Date(booking.date).toLocaleDateString()} · {booking.startTime || booking.timeSlot} {booking.endTime ? `- ${booking.endTime}` : ""}</p>
                     {booking.notes && <p className="text-sm text-blueGray-600">{booking.notes}</p>}
+                    {["confirmed", "completed"].includes(booking.status) && <ReviewForm reservationId={booking._id} onSubmitted={loadReviews} />}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="capitalize">{booking.status}</span>
@@ -203,6 +216,15 @@ export default function Profile() {
               ))}
             </div>
           )}
+          <div className="mt-8 border-t pt-5">
+            <h3 className="text-lg font-bold mb-3">Public recommendations</h3>
+            {sitterReviews.length === 0 ? <p className="text-blueGray-500">No recommendations yet.</p> : sitterReviews.map((review) => (
+              <article key={review._id} className="border-b py-3">
+                <p className="font-semibold">{review.reviewer?.name || review.parent?.name || "Parent"} · {review.rating}/5</p>
+                <p>{review.comment}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -7,6 +7,7 @@ import { useHistory } from "react-router-dom";
 import Navbar from "components/Navbars/AuthNavbar.jsx";
 import Footer from "components/Footers/Footer.jsx";
 import API from "service/api";
+import ReviewForm from "components/ReviewForm.jsx";
 
 
 // Import your API services
@@ -39,6 +40,7 @@ export default function Profile() {
   const [inviteToken, setInviteToken] = useState("");
   const [joinToken, setJoinToken] = useState("");
   const [familyMessage, setFamilyMessage] = useState("");
+  const [reviewedReservations, setReviewedReservations] = useState([]);
 
   const loadFamily = useCallback(async () => {
     if (!user?._id) return;
@@ -53,6 +55,16 @@ export default function Profile() {
   }, [user?._id]);
 
   useEffect(() => { loadFamily(); }, [loadFamily]);
+
+  const loadReviews = useCallback(async () => {
+    if (!user?._id) return;
+    try {
+      const response = await API.get(`/reviews/parent/${user._id}`);
+      setReviewedReservations((response.data.data || []).map((review) => String(review.reservation)).filter(Boolean));
+    } catch (error) { setReviewedReservations([]); }
+  }, [user?._id]);
+
+  useEffect(() => { loadReviews(); }, [loadReviews]);
 
   const inviteParent = async (event) => {
     event.preventDefault();
@@ -380,6 +392,9 @@ export default function Profile() {
                           )}
                         </div>
                       </div>
+                      {["confirmed", "completed"].includes(res.status) && !reviewedReservations.includes(String(reservationId)) && (
+                        <ReviewForm reservationId={reservationId} onSubmitted={loadReviews} />
+                      )}
                     </div>
                   );
                 })}
