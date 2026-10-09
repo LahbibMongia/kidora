@@ -88,6 +88,8 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await page.getByRole("button", { name: "Book a Sitter" }).click();
   await expect(page).toHaveURL(/\/auth\/booking$/);
   await expect(page.getByRole("heading", { name: "Find a Babysitter" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recommended for you" })).toBeVisible();
+  await expect(page.locator("#recommended-heading").locator(".." )).toContainText(sitterName);
   const sitterCard = page.locator("div.bg-white").filter({ has: page.getByRole("heading", { name: sitterName }) }).first();
   await expect(sitterCard).toContainText(`$${rate}`);
   await sitterCard.getByRole("button", { name: "Book Now" }).click();

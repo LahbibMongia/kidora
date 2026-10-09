@@ -18,6 +18,7 @@ export default function Booking() {
 
   // State
   const [sitters, setSitters] = useState([]);
+  const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSitter, setSelectedSitter] = useState(null);
@@ -42,7 +43,10 @@ export default function Booking() {
       setLoading(true);
       const res = await API.get(`/users/babysitters${query ? `?search=${encodeURIComponent(query)}` : ""}`);
       setSitters(res.data.data || []);
+      const recommendationResponse = await API.get(`/recommendations/top${query ? `?search=${encodeURIComponent(query)}` : ""}`);
+      setRecommended(recommendationResponse.data.data || []);
     } catch (err) {
+      setRecommended([]);
     } finally {
       setLoading(false);
     }
@@ -141,6 +145,20 @@ export default function Booking() {
               <i className="fas fa-search absolute left-3 top-3 text-blueGray-400"></i>
             </div>
           </div>
+
+          {recommended.length > 0 && <section aria-labelledby="recommended-heading" className="mb-8">
+            <h2 id="recommended-heading" className="text-xl font-bold text-blueGray-800 mb-3">Recommended for you</h2>
+            <p className="text-sm text-blueGray-500 mb-4">Ranked using public reviews, completed bookings, stated availability, and experience.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recommended.map((sitter, index) => <article key={sitter._id} className="bg-white rounded-lg shadow p-4 border-t-4 border-orange-400">
+                <p className="text-xs uppercase font-bold text-orange-600">#{index + 1} match · {sitter.recommendationScore}%</p>
+                <h3 className="font-bold text-lg mt-1">{sitter.name}</h3>
+                <p className="text-sm">{sitter.reviewCount ? `${sitter.rating}/5 · ${sitter.reviewCount} recommendations` : "No reviews yet"}</p>
+                <p className="text-sm text-blueGray-600">{sitter.completedBookings} completed bookings · {sitter.availability || "Availability not listed"}</p>
+                <button type="button" onClick={() => setSelectedSitter(sitter)} className="mt-3 bg-orange-500 text-white rounded px-4 py-2">Book {sitter.name}</button>
+              </article>)}
+            </div>
+          </section>}
 
           {/* Sitters Grid */}
           {loading ? (

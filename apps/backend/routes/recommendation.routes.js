@@ -4,6 +4,7 @@ const controller = require("../controllers/recommendation.controller");
 const { authenticate, allowRoles } = require("../middlewares/auth");
 
 router.use(authenticate);
+router.get("/top", allowRoles("parent"), controller.getTopRecommendations);
 router.get("/parent/:parentId", controller.getRecommendationByParent);
 router.get("/babysitter/:babysitterId", controller.getRecommendationByBabysitter);
 router.get("/:id", controller.getRecommendation);
