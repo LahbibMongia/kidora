@@ -153,6 +153,7 @@ export default function Booking() {
               {recommended.map((sitter, index) => <article key={sitter._id} className="bg-white rounded-lg shadow p-4 border-t-4 border-orange-400">
                 <p className="text-xs uppercase font-bold text-orange-600">#{index + 1} match · {sitter.recommendationScore}%</p>
                 <h3 className="font-bold text-lg mt-1">{sitter.name}</h3>
+                <p className="font-semibold">${sitter.hourlyRate || 15}/hr</p>
                 <p className="text-sm">{sitter.reviewCount ? `${sitter.rating}/5 · ${sitter.reviewCount} recommendations` : "No reviews yet"}</p>
                 <p className="text-sm text-blueGray-600">{sitter.completedBookings} completed bookings · {sitter.availability || "Availability not listed"}</p>
                 <button type="button" onClick={() => setSelectedSitter(sitter)} className="mt-3 bg-orange-500 text-white rounded px-4 py-2">Book {sitter.name}</button>

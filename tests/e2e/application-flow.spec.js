@@ -31,14 +31,16 @@ async function registerAccount(page, { role, name, email, phone, profile }) {
 }
 
 async function signIn(page, email) {
+  await page.goto("/auth/login");
   await page.getByPlaceholder("Email").fill(email);
   await page.getByPlaceholder("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
 }
 
 test("parent creates an account, finds a babysitter, books, and sees the reservation", async ({ page }) => {
-  const sitterName = "E2E Babysitter";
-  const parentName = "E2E Parent";
+  const runId = Date.now();
+  const sitterName = `E2E Babysitter ${runId}`;
+  const parentName = `E2E Parent ${runId}`;
   const sitterEmail = uniqueEmail("sitter");
   const parentEmail = uniqueEmail("parent");
   const rate = 20;
@@ -78,7 +80,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await signIn(page, parentEmail);
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByRole("heading", { name: "Household Profile" })).toBeVisible();
-  await expect(page.locator('input[type="email"]')).toHaveValue(parentEmail);
+  await expect(page.locator('input[readonly][type="email"]')).toHaveValue(parentEmail);
   await expect(page.locator('input[type="tel"]')).toHaveValue("+15550001002");
   await page.locator('input[name="adresse"]').fill("Updated family address");
   await page.getByRole("button", { name: "Save profile" }).click();
@@ -88,11 +90,12 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await page.getByRole("button", { name: "Book a Sitter" }).click();
   await expect(page).toHaveURL(/\/auth\/booking$/);
   await expect(page.getByRole("heading", { name: "Find a Babysitter" })).toBeVisible();
+  await page.getByPlaceholder("Search by name or city...").fill(sitterName);
   await expect(page.getByRole("heading", { name: "Recommended for you" })).toBeVisible();
   await expect(page.locator("#recommended-heading").locator(".." )).toContainText(sitterName);
-  const sitterCard = page.locator("div.bg-white").filter({ has: page.getByRole("heading", { name: sitterName }) }).first();
+  const sitterCard = page.locator("#recommended-heading").locator("..").locator("article").filter({ has: page.getByRole("heading", { name: sitterName }) }).first();
   await expect(sitterCard).toContainText(`$${rate}`);
-  await sitterCard.getByRole("button", { name: "Book Now" }).click();
+  await sitterCard.getByRole("button", { name: `Book ${sitterName}` }).click();
   await expect(page.getByRole("heading", { name: `Book ${sitterName}` })).toBeVisible();
 
   const dateInput = page.locator('input[type="date"]');
@@ -119,7 +122,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   const reservation = page.locator("main").getByText(sitterName).last().locator("xpath=../../..");
   await expect(reservation).toContainText(new Date(`${date}T00:00:00.000Z`).toLocaleDateString());
   await expect(reservation).toContainText("10:00 - 12:00");
-  await expect(reservation.getByText("pending", { exact: true })).toBeVisible();
+  await expect(reservation.getByText("pending", { exact: true })).toHaveCount(2);
   await expect(page.getByText("pending", { exact: true })).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "My Children" })).toBeVisible();
   await page.getByRole("button", { name: `Message ${sitterName}` }).click();
@@ -139,7 +142,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(2);
   await page.getByRole("button", { name: "Accept" }).first().click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
-  await expect(page.getByText(`You have received a new reservation request from ${parentName}.`)).toBeVisible();
+  await expect(page.getByText(`You have received a new reservation request from ${parentName}.`)).toHaveCount(2);
   await page.getByLabel("Review comment").fill("Reliable and kind family.");
   await page.getByRole("button", { name: "Publish review" }).click();
   await expect(page.getByRole("status")).toHaveText("Review published.");
