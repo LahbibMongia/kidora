@@ -122,11 +122,20 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(reservation.getByText("pending", { exact: true })).toBeVisible();
   await expect(page.getByText("pending", { exact: true })).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "My Children" })).toBeVisible();
+  await page.getByRole("button", { name: `Message ${sitterName}` }).click();
+  await page.getByLabel("Write a message").fill("We can provide the bedtime routine.");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByText("We can provide the bedtime routine.")).toBeVisible();
 
   await page.getByRole("button", { name: "Logout" }).click();
   await signIn(page, sitterEmail);
   await expect(page).toHaveURL(/\/profile-bs$/);
   await expect(page.getByRole("heading", { name: "Booking plan" })).toBeVisible();
+  await page.getByRole("button", { name: `Message ${parentName}` }).click();
+  await expect(page.getByText("We can provide the bedtime routine.")).toBeVisible();
+  await page.getByLabel("Write a message").fill("Thanks, I have noted that.");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByText("Thanks, I have noted that.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(2);
   await page.getByRole("button", { name: "Accept" }).first().click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
@@ -135,6 +144,8 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByRole("status")).toHaveText("Review published.");
   await page.getByRole("button", { name: "Decline" }).click();
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: `Message ${sitterName}` }).click();
+  await expect(page.getByText("Thanks, I have noted that.")).toBeVisible();
 
   await page.getByRole("button", { name: "Logout" }).click();
   await signIn(page, parentEmail);

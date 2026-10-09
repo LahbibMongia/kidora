@@ -8,6 +8,7 @@ import Navbar from "components/Navbars/AuthNavbar.jsx";
 import Footer from "components/Footers/Footer.jsx";
 import API from "service/api";
 import ReviewForm from "components/ReviewForm.jsx";
+import MessageCenter from "components/MessageCenter.jsx";
 
 
 // Import your API services
@@ -401,6 +402,8 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          <MessageCenter />
 
         </main>
       </div>

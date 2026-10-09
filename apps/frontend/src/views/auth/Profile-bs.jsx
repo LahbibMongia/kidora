@@ -6,6 +6,7 @@ import { createReservation } from "../../service/restApiReservation";
 import { getBabysitterReservations, confirmReservation, rejectReservation } from "../../service/restApiReservation";
 import API from "service/api";
 import ReviewForm from "components/ReviewForm.jsx";
+import MessageCenter from "components/MessageCenter.jsx";
 import Navbar from "components/Navbars/AuthNavbar";
 import Footer from "components/Footers/Footer";
 
@@ -350,6 +351,7 @@ export default function Profile() {
           </div>
         </section>
       </main>
+      <section className="container mx-auto px-4 max-w-5xl -mt-8 mb-12"><MessageCenter /></section>
       <Footer />
     </>
   );
