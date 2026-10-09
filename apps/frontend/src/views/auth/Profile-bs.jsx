@@ -7,6 +7,7 @@ import { getBabysitterReservations, confirmReservation, rejectReservation } from
 import API from "service/api";
 import ReviewForm from "components/ReviewForm.jsx";
 import MessageCenter from "components/MessageCenter.jsx";
+import NotificationCenter from "components/NotificationCenter.jsx";
 import Navbar from "components/Navbars/AuthNavbar";
 import Footer from "components/Footers/Footer";
 
@@ -107,6 +108,7 @@ export default function Profile() {
   return (
     <>
       <Navbar transparent />
+      <section className="container mx-auto px-4 max-w-5xl pt-24"><NotificationCenter /></section>
       
       {/* Reservation Modal */}
       {showReservationModal && (

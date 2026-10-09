@@ -9,6 +9,7 @@ import Footer from "components/Footers/Footer.jsx";
 import API from "service/api";
 import ReviewForm from "components/ReviewForm.jsx";
 import MessageCenter from "components/MessageCenter.jsx";
+import NotificationCenter from "components/NotificationCenter.jsx";
 
 
 // Import your API services
@@ -214,6 +215,7 @@ export default function Profile() {
         </header>
 
         <main className="container mx-auto px-4 max-w-4xl flex flex-col gap-8">
+          <NotificationCenter />
           
           {/* Main Profile Card (Household Section) */}
           <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>

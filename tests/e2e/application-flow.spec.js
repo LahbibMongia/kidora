@@ -139,19 +139,22 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   await expect(page.getByRole("button", { name: "Accept" })).toHaveCount(2);
   await page.getByRole("button", { name: "Accept" }).first().click();
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByText(`You have received a new reservation request from ${parentName}.`)).toBeVisible();
   await page.getByLabel("Review comment").fill("Reliable and kind family.");
   await page.getByRole("button", { name: "Publish review" }).click();
   await expect(page.getByRole("status")).toHaveText("Review published.");
   await page.getByRole("button", { name: "Decline" }).click();
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: `Message ${sitterName}` }).click();
-  await expect(page.getByText("Thanks, I have noted that.")).toBeVisible();
 
   await page.getByRole("button", { name: "Logout" }).click();
   await signIn(page, parentEmail);
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByText("confirmed", { exact: true })).toBeVisible();
   await expect(page.getByText("cancelled", { exact: true })).toBeVisible();
+  await expect(page.getByText("Your reservation has been confirmed")).toBeVisible();
+  await expect(page.getByText("Your reservation has been declined")).toBeVisible();
+  await page.getByRole("button", { name: `Message ${sitterName}` }).click();
+  await expect(page.getByText("Thanks, I have noted that.")).toBeVisible();
   await page.getByLabel("Review comment").fill("Great communication and care.");
   await page.getByRole("button", { name: "Publish review" }).click();
   await expect(page.getByRole("status")).toHaveText("Review published.");
@@ -162,4 +165,7 @@ test("parent creates an account, finds a babysitter, books, and sees the reserva
   page.once("dialog", (dialog) => dialog.accept());
   await cancelButton.click();
   await expect(page.getByText("cancelled", { exact: true })).toHaveCount(2);
+  await page.getByRole("button", { name: "Logout" }).click();
+  await signIn(page, sitterEmail);
+  await expect(page.getByText("A reservation has been cancelled by the parent")).toBeVisible();
 });
