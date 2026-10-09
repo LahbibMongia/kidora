@@ -1,16 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import fallbackAvatar from "assets/img/team-2-800x800.jpg";
 
 // components
 
-import TableDropdown from "components/Dropdowns/TableDropdown.jsx";
-import { getAllUsers, deleteUser, addUser } from "../../service/restApiUser";
+import { getAllUsers, deleteUser, addUser, updateUser } from "../../service/restApiUser";
 export default function CardTable({ color }) {
   //js
   const [users, setUsers] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const emptyUser = { name: "", email: "", password: "", role: "parent", adresse: "", phone: "", hourlyRate: "", experienceYears: "" };
   const [newUserData, setNewUserData] = useState(emptyUser);
+  const [editingUser, setEditingUser] = useState(null);
 
     const handleInputChange = (e) => {
       const { name, value } = e.target;
@@ -47,6 +49,19 @@ export default function CardTable({ color }) {
       setErrorMessage(error.response?.data?.message || "Could not add user");
     }
   };
+
+  const handleUpdateUser = async (event) => {
+    event.preventDefault();
+    try {
+      await updateUser(editingUser._id, editingUser);
+      setEditingUser(null);
+      setStatusMessage("User details saved.");
+      setErrorMessage("");
+      await getUsers();
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || "Could not update user");
+    }
+  };
   useEffect(() => { //run page load automatically once when component render instead of creating get all user button
     getUsers();
   }, [getUsers]);
@@ -74,6 +89,7 @@ export default function CardTable({ color }) {
           </div>
         </div>
         {errorMessage && <p role="alert" className="px-6 pb-3 text-sm text-red-600">{errorMessage}</p>}
+        {statusMessage && <p role="status" className="px-6 pb-3 text-sm text-emerald-700">{statusMessage}</p>}
         <div className="block w-full overflow-x-auto">
           {/* Projects table */}
           <table className="items-center w-full bg-transparent border-collapse">
@@ -145,9 +161,9 @@ export default function CardTable({ color }) {
                 <tr key={index}>
                   <th className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left flex items-center">
                     <img
-                      src={`http://localhost:5000/images/${user.user_image}`}
+                      src={user.image && user.image !== "default.jpg" ? user.image : fallbackAvatar}
                       className="h-12 w-12 bg-white rounded-full border"
-                    alt="..."
+                    alt={`${user.name} profile`}
                   ></img>{" "}
                   <span
                     className={
@@ -165,18 +181,15 @@ export default function CardTable({ color }) {
                  {user.role}
                 </td>
                 <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
-                 {user.createdAt}
+                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}
                 </td>
                 <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
-                  <button className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button">
+                  <button onClick={() => setEditingUser({ ...user })} className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button">
                     Edit
                   </button>
                   <button onClick={() => handleDelete(user._id)} className="bg-red-500 text-white active:bg-red-700 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button">
                     Delete
                   </button>
-                </td>
-                <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-right">
-                  <TableDropdown />
                 </td>
               </tr>
               )) ) : (
@@ -191,6 +204,20 @@ export default function CardTable({ color }) {
           </table>
         </div>
       </div>
+      {editingUser && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+        <form onSubmit={handleUpdateUser} className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="edit-user-heading">
+          <div><h2 id="edit-user-heading" className="text-xl font-bold text-blueGray-800">Edit user</h2><p className="mt-1 text-sm text-blueGray-500">Update account details for {editingUser.email}.</p></div>
+          <label className="block text-sm font-medium">Name<input required value={editingUser.name || ""} onChange={(event) => setEditingUser({ ...editingUser, name: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+          <label className="block text-sm font-medium">Phone<input required value={editingUser.phone || ""} onChange={(event) => setEditingUser({ ...editingUser, phone: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+          <label className="block text-sm font-medium">Address<input value={editingUser.adresse || ""} onChange={(event) => setEditingUser({ ...editingUser, adresse: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+          {editingUser.role === "babysitter" ? <div className="grid grid-cols-2 gap-3">
+            <label className="text-sm font-medium">Hourly rate<input type="number" min="0" step="0.01" value={editingUser.hourlyRate ?? ""} onChange={(event) => setEditingUser({ ...editingUser, hourlyRate: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+            <label className="text-sm font-medium">Experience (years)<input type="number" min="0" value={editingUser.experienceYears ?? ""} onChange={(event) => setEditingUser({ ...editingUser, experienceYears: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>
+          </div> : <label className="block text-sm font-medium">Number of children<input type="number" min="0" value={editingUser.numberOfChildren ?? ""} onChange={(event) => setEditingUser({ ...editingUser, numberOfChildren: event.target.value })} className="mt-1 w-full rounded border p-2" /></label>}
+          {errorMessage && <p role="alert" className="text-sm text-red-700">{errorMessage}</p>}
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => { setEditingUser(null); setErrorMessage(""); }} className="rounded border px-4 py-2">Cancel</button><button type="submit" className="rounded bg-blueGray-800 px-4 py-2 font-semibold text-white">Save changes</button></div>
+        </form>
+      </div>}
       <div>
           <h2 className="text-xl font-bold leading-normal mt-0 mb-2 text-lightBlue-700">Add New User</h2>
         

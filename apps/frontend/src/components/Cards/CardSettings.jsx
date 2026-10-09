@@ -1,184 +1,47 @@
-import React from "react";
-
-// components
+import React, { useEffect, useState } from "react";
+import API from "service/api";
+import { useAuth } from "context/AuthContext.jsx";
 
 export default function CardSettings() {
-  return (
-    <>
-      <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-blueGray-100 border-0">
-        <div className="rounded-t bg-white mb-0 px-6 py-6">
-          <div className="text-center flex justify-between">
-            <h6 className="text-blueGray-700 text-xl font-bold">My account</h6>
-            <button
-              className="bg-lightBlue-500 text-white active:bg-lightBlue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 ease-linear transition-all duration-150"
-              type="button"
-            >
-              Settings
-            </button>
-          </div>
-        </div>
-        <div className="flex-auto px-4 lg:px-10 py-10 pt-0">
-          <form>
-            <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
-              User Information
-            </h6>
-            <div className="flex flex-wrap">
-              <div className="w-full lg:w-6/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="lucky.jesse"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-6/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="jesse@example.com"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-6/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="Lucky"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-6/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="Jesse"
-                  />
-                </div>
-              </div>
-            </div>
+  const { user, setUser } = useAuth();
+  const [values, setValues] = useState({ name: "", phone: "", adresse: "" });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
 
-            <hr className="mt-6 border-b-1 border-blueGray-300" />
+  useEffect(() => {
+    setValues({ name: user?.name || "", phone: user?.phone || "", adresse: user?.adresse || "" });
+  }, [user?._id, user?.name, user?.phone, user?.adresse]);
 
-            <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
-              Contact Information
-            </h6>
-            <div className="flex flex-wrap">
-              <div className="w-full lg:w-12/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-4/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    City
-                  </label>
-                  <input
-                    type="email"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="New York"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-4/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="United States"
-                  />
-                </div>
-              </div>
-              <div className="w-full lg:w-4/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="Postal Code"
-                  />
-                </div>
-              </div>
-            </div>
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await API.put(`/users/${user._id}`, values);
+      setUser(response.data.data);
+      setMessage("Account details saved.");
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Could not save account details.");
+    } finally { setSaving(false); }
+  };
 
-            <hr className="mt-6 border-b-1 border-blueGray-300" />
+  const update = (field) => (event) => setValues((current) => ({ ...current, [field]: event.target.value }));
+  const inputClass = "mt-1 w-full rounded-lg border border-blueGray-200 bg-white px-3 py-2 text-sm text-blueGray-800 focus:border-blueGray-500 focus:outline-none focus:ring-2 focus:ring-blueGray-200";
 
-            <h6 className="text-blueGray-400 text-sm mt-3 mb-6 font-bold uppercase">
-              About Me
-            </h6>
-            <div className="flex flex-wrap">
-              <div className="w-full lg:w-12/12 px-4">
-                <div className="relative w-full mb-3">
-                  <label
-                    className="block uppercase text-blueGray-600 text-xs font-bold mb-2"
-                    htmlFor="grid-password"
-                  >
-                    About me
-                  </label>
-                  <textarea
-                    type="text"
-                    className="border-0 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150"
-                    defaultValue="A beautiful UI Kit and Admin for React & Tailwind CSS. It is Free and Open Source."
-                    rows="4"
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
+  return <section aria-labelledby="account-settings-heading" className="mb-6 rounded-xl border border-blueGray-100 bg-white shadow-sm">
+    <header className="flex items-center justify-between gap-3 border-b border-blueGray-100 px-6 py-5">
+      <div><h2 id="account-settings-heading" className="text-xl font-bold text-blueGray-800">Account details</h2><p className="mt-1 text-sm text-blueGray-500">Manage the information attached to your admin account.</p></div>
+      <span className="rounded-full bg-blueGray-100 px-3 py-1 text-xs font-semibold capitalize text-blueGray-600">{user?.role || "Admin"}</span>
+    </header>
+    <form onSubmit={submit} className="grid gap-4 p-6 sm:grid-cols-2">
+      <label className="text-sm font-medium text-blueGray-600">Full name<input name="name" required value={values.name} onChange={update("name")} className={inputClass} /></label>
+      <label className="text-sm font-medium text-blueGray-600">Email<input type="email" readOnly value={user?.email || ""} className={`${inputClass} bg-blueGray-50`} /></label>
+      <label className="text-sm font-medium text-blueGray-600">Phone<input type="tel" required value={values.phone} onChange={update("phone")} className={inputClass} /></label>
+      <label className="text-sm font-medium text-blueGray-600">Address<input value={values.adresse} onChange={update("adresse")} className={inputClass} /></label>
+      <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+        <button type="submit" disabled={saving || !user?._id} className="rounded-lg bg-blueGray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blueGray-700 disabled:opacity-50">{saving ? "Saving…" : "Save account"}</button>
+        {message && <p role="status" className="text-sm text-blueGray-600">{message}</p>}
       </div>
-    </>
-  );
+    </form>
+  </section>;
 }
