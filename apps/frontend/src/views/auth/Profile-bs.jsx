@@ -17,6 +17,7 @@ export default function Profile() {
   const [reservations, setReservations] = useState([]);
   const [reservationError, setReservationError] = useState("");
   const [sitterReviews, setSitterReviews] = useState([]);
+  const [myReviewsByReservation, setMyReviewsByReservation] = useState({});
 
   const loadReservations = useCallback(async () => {
     if (!currentUser?._id) return;
@@ -39,6 +40,15 @@ export default function Profile() {
     } catch (error) { setSitterReviews([]); }
   }, [currentUser?._id]);
   useEffect(() => { loadReviews(); }, [loadReviews]);
+
+  const loadMyReviews = useCallback(async () => {
+    if (!currentUser?._id) return;
+    try {
+      const response = await API.get(`/reviews/parent/${currentUser._id}`);
+      setMyReviewsByReservation(Object.fromEntries((response.data.data || []).filter((review) => review.reservation).map((review) => [String(review.reservation._id || review.reservation), review])));
+    } catch (error) { setMyReviewsByReservation({}); }
+  }, [currentUser?._id]);
+  useEffect(() => { loadMyReviews(); }, [loadMyReviews]);
 
   const updateReservation = async (id, action) => {
     try {
@@ -206,7 +216,7 @@ export default function Profile() {
                     <p className="font-semibold">{booking.parent?.name || "Parent"}</p>
                     <p>{new Date(booking.date).toLocaleDateString()} · {booking.startTime || booking.timeSlot} {booking.endTime ? `- ${booking.endTime}` : ""}</p>
                     {booking.notes && <p className="text-sm text-blueGray-600">{booking.notes}</p>}
-                    {["confirmed", "completed"].includes(booking.status) && <ReviewForm reservationId={booking._id} onSubmitted={loadReviews} />}
+                    {["confirmed", "completed"].includes(booking.status) && <ReviewForm reservationId={booking._id} existingReview={myReviewsByReservation[String(booking._id)]} onSubmitted={() => { loadReviews(); loadMyReviews(); }} />}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="capitalize">{booking.status}</span>

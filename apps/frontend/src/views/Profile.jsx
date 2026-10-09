@@ -42,18 +42,21 @@ export default function Profile() {
   const [inviteToken, setInviteToken] = useState("");
   const [joinToken, setJoinToken] = useState("");
   const [familyMessage, setFamilyMessage] = useState("");
-  const [reviewedReservations, setReviewedReservations] = useState([]);
+  const [reviewsByReservation, setReviewsByReservation] = useState({});
+  const [familyLoading, setFamilyLoading] = useState(true);
+  const [childrenSaving, setChildrenSaving] = useState(false);
 
   const loadFamily = useCallback(async () => {
     if (!user?._id) return;
     try {
+      setFamilyLoading(true);
       const response = await API.get("/families/me");
-      const household = response.data.data;
+      const household = response.data.data || { members: [], children: [] };
       setFamily(household);
       setChildren(household.children || []);
     } catch (error) {
       setFamilyMessage("Could not load household details.");
-    }
+    } finally { setFamilyLoading(false); }
   }, [user?._id]);
 
   useEffect(() => { loadFamily(); }, [loadFamily]);
@@ -62,8 +65,8 @@ export default function Profile() {
     if (!user?._id) return;
     try {
       const response = await API.get(`/reviews/parent/${user._id}`);
-      setReviewedReservations((response.data.data || []).map((review) => String(review.reservation)).filter(Boolean));
-    } catch (error) { setReviewedReservations([]); }
+      setReviewsByReservation(Object.fromEntries((response.data.data || []).filter((review) => review.reservation).map((review) => [String(review.reservation._id || review.reservation), review])));
+    } catch (error) { setReviewsByReservation({}); }
   }, [user?._id]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
@@ -93,13 +96,14 @@ export default function Profile() {
   };
 
   const saveChildren = async () => {
+    setChildrenSaving(true);
     try {
       const response = await API.put("/families/children", { children });
       setChildren(response.data.data.children);
       setFamilyMessage("Shared children list saved.");
     } catch (error) {
       setFamilyMessage(error.response?.data?.message || "Could not save children.");
-    }
+    } finally { setChildrenSaving(false); }
   };
 
   const saveProfile = async (event) => {
@@ -295,23 +299,25 @@ export default function Profile() {
 
           {/* Children Summary */}
           <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>
-            <div className="flex justify-between items-center mb-6 border-b border-blueGray-100 pb-3 pl-4 pr-4">
-              <h2 className="text-xl font-bold text-blueGray-800">My Children</h2>
-              <button type="button" onClick={() => setChildren([...children, { name: "", age: "" }])} className="text-sm font-bold text-blueGray-500 hover:text-blueGray-800 transition-colors uppercase outline-none focus:outline-none">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-blueGray-100 pb-3">
+              <div><h2 className="text-xl font-bold text-blueGray-800">My Children</h2><p className="text-sm text-blueGray-500">Children in your shared household</p></div>
+              <button type="button" disabled={children.length >= 20} onClick={() => setChildren([...children, { name: "", age: "" }])} className="text-sm font-bold text-blueGray-700 border rounded-lg px-3 py-2 hover:bg-blueGray-50 disabled:opacity-50">
                 + Add Child
               </button>
             </div>
-            {children.map((child, index) => <div key={`${index}-${child.name}`} className="grid grid-cols-[1fr_120px_auto] gap-2 mb-2">
-              <input aria-label={`Child ${index + 1} name`} value={child.name} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, name: event.target.value } : item))} placeholder="Child name" className="border rounded p-2" />
-              <input aria-label={`Child ${index + 1} age`} type="number" min="0" max="18" value={child.age ?? ""} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, age: event.target.value } : item))} placeholder="Age" className="border rounded p-2" />
-              <button type="button" onClick={() => setChildren(children.filter((_, i) => i !== index))} aria-label={`Remove child ${index + 1}`}>Remove</button>
-            </div>)}
-            <button type="button" onClick={saveChildren} className="bg-blueGray-800 text-white rounded px-4 py-2">Save children</button>
+            {familyLoading ? <p aria-live="polite" className="py-4 text-blueGray-500">Loading your children...</p> : children.length === 0 ? <p className="rounded-lg bg-blueGray-50 p-4 text-sm text-blueGray-600">No children added yet. Add a child to keep household details together.</p> : <div className="space-y-3">
+              {children.map((child, index) => <div key={`${index}-${child.name}`} className="grid grid-cols-[minmax(0,1fr)_100px_auto] gap-2 rounded-lg border border-blueGray-100 p-3">
+                <label className="text-xs font-semibold text-blueGray-500">Child {index + 1}<input aria-label={`Child ${index + 1} name`} value={child.name} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, name: event.target.value } : item))} placeholder="Child name" className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800" /></label>
+                <label className="text-xs font-semibold text-blueGray-500">Age<input aria-label={`Child ${index + 1} age`} type="number" min="0" max="18" value={child.age ?? ""} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, age: event.target.value } : item))} placeholder="Age" className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800" /></label>
+                <button type="button" onClick={() => setChildren(children.filter((_, i) => i !== index))} aria-label={`Remove child ${index + 1}`} className="self-end text-sm text-red-700 underline">Remove</button>
+              </div>)}
+            </div>}
+            <button type="button" disabled={childrenSaving || familyLoading} onClick={saveChildren} className="mt-4 bg-blueGray-800 text-white rounded-lg px-4 py-2 disabled:opacity-50">{childrenSaving ? "Saving..." : "Save children"}</button>
           </div>
 
           <section className="bg-white shadow-lg p-6 sm:p-8 rounded-lg" aria-labelledby="family-heading">
             <h2 id="family-heading" className="text-xl font-bold mb-3">Shared household</h2>
-            <ul className="mb-4">{family.members?.map((member) => <li key={member._id}>{member.name} ({member.email})</li>)}</ul>
+            <ul className="mb-4">{family.members?.map((member, index) => <li key={member?._id || index}>{member?.name || "Household member"}{member?.email ? ` (${member.email})` : ""}</li>)}</ul>
             <form onSubmit={inviteParent} className="flex gap-2 mb-3">
               <input type="email" aria-label="Other parent email" placeholder="Other parent's email" required value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} className="border rounded p-2" />
               <button type="submit" className="border rounded px-3">Create invite code</button>
@@ -395,8 +401,8 @@ export default function Profile() {
                           )}
                         </div>
                       </div>
-                      {["confirmed", "completed"].includes(res.status) && !reviewedReservations.includes(String(reservationId)) && (
-                        <ReviewForm reservationId={reservationId} onSubmitted={loadReviews} />
+                      {["confirmed", "completed"].includes(res.status) && (
+                        <ReviewForm reservationId={reservationId} existingReview={reviewsByReservation[String(reservationId)]} onSubmitted={loadReviews} />
                       )}
                     </div>
                   );
