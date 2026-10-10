@@ -2,6 +2,7 @@ const Recommendation = require("../models/recommendation.model");
 const User = require("../models/user.model");
 const Reservation = require("../models/reservation.model");
 const Avis = require("../models/avis.model");
+const { buildTextScores, calculateRecommendationScore } = require("../services/recommendationScoring");
 
 function errorResponse(res, error) {
   const status = error.name === "ValidationError" || error.name === "CastError" ? 400 : 500;
@@ -16,12 +17,10 @@ function permitted(req, parentId, babysitterId) {
 exports.getTopRecommendations = async (req, res) => {
   try {
     const filter = { role: "babysitter", block: { $ne: true } };
-    if (req.query.search) {
-      const term = String(req.query.search).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      filter.$or = [{ name: { $regex: term, $options: "i" } }, { adresse: { $regex: term, $options: "i" } }];
-    }
     if (req.query.maxRate !== undefined && Number.isFinite(Number(req.query.maxRate))) filter.hourlyRate = { $lte: Number(req.query.maxRate) };
     const sitters = await User.find(filter).select("-password -loginAttempts").limit(100);
+    const query = String(req.query.search || "").slice(0, 300);
+    const textScores = buildTextScores(sitters, query);
     const ids = sitters.map((sitter) => sitter._id);
     const [reviews, history] = await Promise.all([
       Avis.aggregate([
@@ -42,8 +41,17 @@ exports.getTopRecommendations = async (req, res) => {
       const completed = bookings?.completed || 0;
       const availability = String(sitter.availability || "").trim().length > 0;
       const experienceScore = Math.min(Number(sitter.experienceYears || 0) / 10, 1) * 100;
-      const score = Math.round((rating / 5) * 45 + Math.min(completed / 10, 1) * 25 + (availability ? 20 : 0) + experienceScore * 0.1);
-      return { ...sitter.toJSON(), rating: review ? Number(rating.toFixed(1)) : null, reviewCount: review?.count || 0, completedBookings: completed, recommendationScore: score };
+      const textMatchScore = textScores.get(String(sitter._id)) || 0;
+      const trustScore = (rating / 5) * 45 + Math.min(completed / 10, 1) * 25 + (availability ? 20 : 0) + experienceScore * 0.1;
+      const score = calculateRecommendationScore({ query, textMatchScore, trustScore });
+      return {
+        ...sitter.toJSON(),
+        rating: review ? Number(rating.toFixed(1)) : null,
+        reviewCount: review?.count || 0,
+        completedBookings: completed,
+        textMatchScore: Number((textMatchScore * 100).toFixed(1)),
+        recommendationScore: score,
+      };
     }).sort((a, b) => b.recommendationScore - a.recommendationScore || String(a.name).localeCompare(String(b.name))).slice(0, 3);
     return res.json({ data });
   } catch (error) { return errorResponse(res, error); }

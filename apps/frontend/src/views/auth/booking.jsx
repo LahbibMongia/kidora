@@ -163,10 +163,10 @@ export default function Booking() {
           {searchError && <p role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{searchError}</p>}
           {recommended.length > 0 && <section aria-labelledby="recommended-heading" className="mb-8">
             <h2 id="recommended-heading" className="text-xl font-bold text-blueGray-800 mb-3">Recommended for you</h2>
-            <p className="text-sm text-blueGray-500 mb-4">Ranked using public reviews, completed bookings, stated availability, and experience.</p>
+            <p className="text-sm text-blueGray-500 mb-4">Matches profile text with your search, then considers reviews, completed bookings, availability, and experience.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {recommended.map((sitter, index) => <article key={sitter._id} className="bg-white rounded-lg shadow p-4 border-t-4 border-orange-400">
-                <p className="text-xs uppercase font-bold text-orange-600">#{index + 1} match · {sitter.recommendationScore}%</p>
+                <p className="text-xs uppercase font-bold text-orange-600">#{index + 1} match · {sitter.recommendationScore}%{sitter.textMatchScore > 0 ? ` · ${sitter.textMatchScore}% text match` : ""}</p>
                 <h3 className="font-bold text-lg mt-1">{sitter.name}</h3>
                 <p className="font-semibold">{sitter.hourlyRate != null ? `$${sitter.hourlyRate}/hr` : "Rate not listed"}</p>
                 <p className="text-sm">{sitter.reviewCount ? `${sitter.rating}/5 · ${sitter.reviewCount} recommendations` : "No reviews yet"}</p>
