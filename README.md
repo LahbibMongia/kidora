@@ -42,10 +42,24 @@ registration supports parent and babysitter accounts only.
 Populate the local development database with demo accounts and bookings by
 running `make seed-dev`. The command adds or refreshes three parents, four
 babysitters, and four bookings; it does not delete other database records. All
-seeded accounts use password `KidoraDemo123` and the command prints their email
-addresses. Re-running the command refreshes these demo accounts and resets
-their passwords to the shared demo password. It refuses to run in production
-or against a non-local MongoDB instance.
+seeded accounts use password `KidoraDemo123`:
+
+| Role | Email |
+| --- | --- |
+| Parent | `demo.parent.alex@example.test` |
+| Parent | `demo.parent.jamie@example.test` |
+| Parent | `demo.parent.taylor@example.test` |
+| Babysitter | `demo.babysitter.lina@example.test` |
+| Babysitter | `demo.babysitter.amir@example.test` |
+| Babysitter | `demo.babysitter.sofia@example.test` |
+| Babysitter | `demo.babysitter.noah@example.test` |
+
+
+KidoraDemo123
+
+Re-running the command refreshes these demo accounts and resets their passwords
+to the shared demo password. It refuses to run in production or against a
+non-local MongoDB instance.
 
 Use `make infra-up`, `make infra-down`, and `make infra-logs` to manage MongoDB
 separately. `make help` lists available commands. MongoDB data persists in a
