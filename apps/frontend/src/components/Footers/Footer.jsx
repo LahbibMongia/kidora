@@ -59,14 +59,7 @@ export default function Footer() {
                     Useful Links
                   </span>
                   <ul className="list-unstyled">
-                    <li>
-                      <a
-                        className="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                        href="/landing"
-                      >
-                        About Us
-                      </a>
-                    </li>
+                    
                     <li>
                       <a
                         className="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"

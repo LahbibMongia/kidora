@@ -34,14 +34,7 @@ export default function FooterSmall(props) {
                     KidOra
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/landing"
-                    className="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
-                  >
-                    About Us
-                  </a>
-                </li>
+                
                 <li>
                   <a
                     href="/auth/login"

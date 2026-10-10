@@ -28,14 +28,7 @@ export default function FooterAdmin() {
                     KidOra
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/landing"
-                    className="text-blueGray-600 hover:text-blueGray-800 text-sm font-semibold block py-1 px-3"
-                  >
-                    About Us
-                  </a>
-                </li>
+                
                 <li>
                   <a
                     href="/auth/login"

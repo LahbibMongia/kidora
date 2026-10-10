@@ -380,15 +380,7 @@ export default function Index() {
                   <h5 className="text-xl font-semibold pb-4 text-center">
                     Community Trust
                   </h5>
-                  <Link to="/landing">
-                    <div className="hover:-mt-4 relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-lg ease-linear transition-all duration-150">
-                      <img
-                        alt="..."
-                        className="align-middle border-none max-w-full h-auto rounded-lg"
-                        src={asset_assets_img_community_jpg}
-                      />
-                    </div>
-                  </Link>
+                  
                 </div>
               </div>
             </div>

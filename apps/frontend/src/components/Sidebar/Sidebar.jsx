@@ -201,15 +201,7 @@ export default function Sidebar() {
             {/* Navigation */}
 
             <ul className="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-              <li className="items-center">
-                <Link
-                  className="text-blueGray-700 hover:text-blueGray-500 text-xs uppercase py-3 font-bold block"
-                  to="/landing"
-                >
-                  <i className="fas fa-newspaper text-blueGray-400 mr-2 text-sm"></i>{" "}
-                  Landing Page
-                </Link>
-              </li>
+              
 
               <li className="items-center">
                 <Link
@@ -229,15 +221,7 @@ export default function Sidebar() {
               KidOra
             </h6>
             <ul className="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-              <li className="items-center">
-                <Link
-                  className="text-blueGray-700 hover:text-blueGray-500 text-sm block mb-4 no-underline font-semibold"
-                  to="/landing"
-                >
-                  <i className="fas fa-info-circle mr-2 text-blueGray-300 text-base"></i>
-                  About KidOra
-                </Link>
-              </li>
+              
             </ul>
           </div>
         </div>

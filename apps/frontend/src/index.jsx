@@ -15,7 +15,7 @@ import Admin from "layouts/Admin.jsx";
 import Auth from "layouts/Auth.jsx";
 
 // views without layouts
-import Landing from "views/Landing.jsx";
+
 import Profile from "views/Profile.jsx";
 import ProfileBs from "views/auth/Profile-bs.jsx";
 import EditProfileBs from "views/auth/EditProfile-bs.jsx";
@@ -29,7 +29,6 @@ createRoot(document.getElementById("root")).render(
         <ProtectedRoute path="/admin" component={Admin} adminOnly />
         <ProtectedRoute path="/auth/booking" exact component={Booking} allowedRoles={["parent"]} />
         <Route path="/auth" component={Auth} />
-        <Route path="/landing" exact component={Landing} />
         <ProtectedRoute path="/profile" exact component={Profile} />
         <ProtectedRoute path="/profile-bs" exact component={ProfileBs} />
         <ProtectedRoute path="/edit-profile-bs" exact component={EditProfileBs} />
