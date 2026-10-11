@@ -73,8 +73,7 @@ export default function Profile() {
           <div
             className="absolute top-0 w-full h-full bg-center bg-cover"
             style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1497366247376-ebfdbb2b4968?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80')",
+              backgroundColor: "#0d5865"
             }}
           >
             <span id="blackOverlay" className="w-full h-full absolute opacity-20 bg-black"></span>

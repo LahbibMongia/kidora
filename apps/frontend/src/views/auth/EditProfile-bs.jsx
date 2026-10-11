@@ -78,7 +78,7 @@ export default function EditProfileBs() {
 
       {/* Main page content */}
       <div className="bg-blueGray-100 min-h-screen pb-16">
-        <main className="container mx-auto px-4 max-w-4xl -mt-24">
+        <main className="container mx-auto px-4 max-w-4xl -mt-8">
           <form onSubmit={saveProfile}>
             <div className="flex flex-wrap">
               {/* Left Column: Photo Upload and Caregiver Overview */}
@@ -431,4 +431,3 @@ export default function EditProfileBs() {
     </>
   );
 }
-

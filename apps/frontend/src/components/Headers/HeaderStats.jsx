@@ -24,7 +24,7 @@ export default function HeaderStats() {
     }).catch((failure) => setError(failure.response?.data?.message || "Could not load dashboard totals."));
   }, []);
 
-  return <div className="relative bg-lightBlue-600 pb-12 pt-12 md:pt-32">
+  return <div className="relative bg-lightBlue-500 pb-12 pt-12 md:pt-32">
     <div className="mx-auto w-full px-4 md:px-10">
       {error && <p role="alert" className="mb-4 rounded bg-white/95 p-3 text-sm text-red-700">{error}</p>}
       <div className="flex flex-wrap" aria-label="Platform totals">

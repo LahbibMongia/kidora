@@ -1,4 +1,4 @@
-import asset_assets_img_team_1_800x800_jpg from "assets/img/team-1-800x800.jpg";
+import { FaUser } from "react-icons/fa";
 import React from "react";
 import { createPopper } from "@popperjs/core";
 
@@ -29,11 +29,7 @@ const UserDropdown = () => {
       >
         <div className="items-center flex">
           <span className="w-12 h-12 text-sm text-white bg-blueGray-200 inline-flex items-center justify-center rounded-full">
-            <img
-              alt="..."
-              className="w-full rounded-full align-middle border-none shadow-lg"
-              src={asset_assets_img_team_1_800x800_jpg}
-            />
+            <FaUser className="text-2xl text-blueGray-500" />
           </span>
         </div>
       </a>
