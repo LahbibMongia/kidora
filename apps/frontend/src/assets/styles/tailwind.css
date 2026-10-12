@@ -52,6 +52,10 @@
   --tw-contain-style:  ;
 }
 
+:root {
+  --color-cream-50: #FDF9F2;
+}
+
 ::backdrop {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;

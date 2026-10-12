@@ -138,7 +138,7 @@ export default function Booking() {
   return (
     <>
       <Navbar transparent />
-      <div className="bg-blueGray-100 min-h-screen pb-16 pt-24">
+      <div id="root" style={{ minHeight: "100%", backgroundColor: "var(--color-cream-50)" }} className="min-h-screen pb-16 pt-24">
         <main className="container mx-auto px-4 max-w-6xl">
           
           {/* Header & Search */}

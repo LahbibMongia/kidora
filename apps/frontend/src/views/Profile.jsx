@@ -183,7 +183,7 @@ export default function Profile() {
         }
       `}</style>
       <Navbar transparent />
-      <div className="bg-blueGray-50 min-h-screen pb-16 pt-24">
+      <div id="root" style={{ minHeight: "100%", backgroundColor: "var(--color-cream-50)" }} className="min-h-screen pb-16 pt-24">
         {/* Header & Navigation */}
         <header className="shadow-sm py-4 px-6 mb-8 mt-0 w-full flex justify-between items-center relative z-10" style={{ borderRadius: "0 0 10px 10px" }}>
           <div className="container mx-auto max-w-4xl flex justify-end items-center gap-12">
@@ -290,22 +290,92 @@ export default function Profile() {
           </div>
 
           {/* Children Summary */}
-          <div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>
-            <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-blueGray-100 pb-3">
-              <div><h2 className="text-xl font-bold text-blueGray-800">My Children</h2><p className="text-sm text-blueGray-500">Children in your shared household</p></div>
-              <button type="button" disabled={children.length >= 20} onClick={() => setChildren([...children, { name: "", age: "" }])} className="text-sm font-bold text-blueGray-700 border rounded-lg px-3 py-2 hover:bg-blueGray-50 disabled:opacity-50">
-                + Add Child
-              </button>
-            </div>
-            {familyLoading ? <p aria-live="polite" className="py-4 text-blueGray-500">Loading your children...</p> : children.length === 0 ? <p className="rounded-lg bg-blueGray-50 p-4 text-sm text-blueGray-600">No children added yet. Add a child to keep household details together.</p> : <div className="space-y-3">
-              {children.map((child, index) => <div key={`${index}-${child.name}`} className="grid grid-cols-[minmax(0,1fr)_100px_auto] gap-2 rounded-lg border border-blueGray-100 p-3">
-                <label className="text-xs font-semibold text-blueGray-500">Child {index + 1}<input aria-label={`Child ${index + 1} name`} value={child.name} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, name: event.target.value } : item))} placeholder="Child name" className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800" /></label>
-                <label className="text-xs font-semibold text-blueGray-500">Age<input aria-label={`Child ${index + 1} age`} type="number" min="0" max="18" value={child.age ?? ""} onChange={(event) => setChildren(children.map((item, i) => i === index ? { ...item, age: event.target.value } : item))} placeholder="Age" className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800" /></label>
-                <button type="button" onClick={() => setChildren(children.filter((_, i) => i !== index))} aria-label={`Remove child ${index + 1}`} className="self-end text-sm text-red-700 underline">Remove</button>
-              </div>)}
-            </div>}
-            <button type="button" disabled={childrenSaving || familyLoading} onClick={saveChildren} className="mt-4 bg-blueGray-800 text-white rounded-lg px-4 py-2 disabled:opacity-50">{childrenSaving ? "Saving..." : "Save children"}</button>
-          </div>
+<div className="bg-white shadow-lg p-6 sm:p-8" style={{ borderRadius: "10px" }}>
+  <div className="flex flex-wrap justify-between items-center gap-3 mb-4 border-b border-blueGray-100 pb-3">
+    <div>
+      <h2 className="text-xl font-bold text-blueGray-800">My Children</h2>
+      <p className="text-sm text-blueGray-500">Children in your shared household</p>
+    </div>
+    <button
+      type="button"
+      disabled={children.length >= 20}
+      onClick={() => setChildren((prev) => [...prev, { id: Date.now(), name: "", age: "" }])}
+      className="text-sm font-bold text-blueGray-700 border rounded-lg px-3 py-2 hover:bg-blueGray-50 disabled:opacity-50"
+    >
+      + Add Child
+    </button>
+  </div>
+
+  {familyLoading ? (
+    <p aria-live="polite" className="py-4 text-blueGray-500">Loading your children...</p>
+  ) : children.length === 0 ? (
+    <p className="rounded-lg bg-blueGray-50 p-4 text-sm text-blueGray-600">
+      No children added yet. Add a child to keep household details together.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {children.map((child, index) => (
+        <div
+          key={child._id || child.id || index}
+          className="grid grid-cols-[minmax(0,1fr)_100px_auto] gap-2 rounded-lg border border-blueGray-100 p-3"
+        >
+          <label className="text-xs font-semibold text-blueGray-500">
+            Child {index + 1}
+            <input
+              aria-label={`Child ${index + 1} name`}
+              value={child.name || ""}
+              onChange={(event) => {
+                const val = event.target.value;
+                setChildren((prev) =>
+                  prev.map((item, i) => (i === index ? { ...item, name: val } : item))
+                );
+              }}
+              placeholder="Child name"
+              className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800"
+            />
+          </label>
+
+          <label className="text-xs font-semibold text-blueGray-500">
+            Age
+            <input
+              aria-label={`Child ${index + 1} age`}
+              type="number"
+              min="0"
+              max="18"
+              value={child.age ?? ""}
+              onChange={(event) => {
+                const val = event.target.value;
+                setChildren((prev) =>
+                  prev.map((item, i) => (i === index ? { ...item, age: val } : item))
+                );
+              }}
+              placeholder="Age"
+              className="mt-1 w-full border rounded p-2 text-sm text-blueGray-800"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setChildren((prev) => prev.filter((_, i) => i !== index))}
+            aria-label={`Remove child ${index + 1}`}
+            className="self-end text-sm text-red-700 underline"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+
+  <button
+    type="button"
+    disabled={childrenSaving || familyLoading}
+    onClick={saveChildren}
+    className="mt-4 bg-blueGray-800 text-white rounded-lg px-4 py-2 disabled:opacity-50"
+  >
+    {childrenSaving ? "Saving..." : "Save children"}
+  </button>
+</div>
 
           <section className="bg-white shadow-lg p-6 sm:p-8 rounded-lg" aria-labelledby="family-heading">
             <h2 id="family-heading" className="text-xl font-bold mb-3">Shared household</h2>
